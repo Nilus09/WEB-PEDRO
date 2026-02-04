@@ -49,8 +49,6 @@
   </script>
   
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     body {
@@ -406,21 +404,15 @@
 </footer>
 
 <script>
-// ========== CONFIGURACIÓN DE SUPABASE ==========
-const supabaseUrl = 'https://auxdvxgjnsbvekevigci.supabase.co';
-const supabaseKey = 'sb_publishable_YwG_B-9xuA23lFgdjX9sBQ_-NKvvGRL';
-const ownerEmail = 'jjgnrp777@gmail.com';
-
-// Inicializar Supabase
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// ========== VARIABLES GLOBALES ==========
+// Sistema de Autenticación
 let currentUser = null;
-let photos = [];
-let currentPhoto = null;
+const users = JSON.parse(localStorage.getItem('users')) || [];
+const ownerEmail = 'nilkon@nullweb.es'; // ⚠️ CAMBIA ESTO POR TU EMAIL REAL
 
-// ========== FUNCIONES DE AUTENTICACIÓN ==========
-async function openLoginModal() {
+// Observaciones (almacenadas por foto)
+let observations = JSON.parse(localStorage.getItem('photoObservations')) || [];
+
+function openLoginModal() {
   document.getElementById('authModal').classList.remove('hidden');
   document.getElementById('authModal').classList.add('flex');
   resetAuthForm();
@@ -455,56 +447,6 @@ function toggleRegister() {
   }
 }
 
-async function handleAuth(event) {
-  event.preventDefault();
-  
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const name = document.getElementById('name').value;
-  const isRegistering = document.getElementById('nameField').classList.contains('hidden') === false;
-  
-  const btn = document.getElementById('submitBtn');
-  const originalText = btn.textContent;
-  btn.textContent = 'Cargando...';
-  
-  try {
-    if (isRegistering) {
-      // Registro
-      const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-        options: {
-          data: {
-            name: name || email.split('@')[0]
-          }
-        }
-      });
-      
-      if (error) throw error;
-      
-      alert('¡Registro exitoso! Revisa tu email para confirmar tu cuenta.');
-      closeAuthModal();
-    } else {
-      // Login
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
-      
-      if (error) throw error;
-      
-      currentUser = data.user;
-      alert(`¡Bienvenido de nuevo, ${currentUser.user_metadata?.name || currentUser.email}!`);
-      closeAuthModal();
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Error: ' + (error.message || 'Algo salió mal'));
-  } finally {
-    btn.textContent = originalText;
-  }
-}
-
 function toggleForgotPassword() {
   const section = document.getElementById('forgotPasswordSection');
   const form = document.getElementById('authForm');
@@ -518,179 +460,205 @@ function toggleForgotPassword() {
   }
 }
 
-async function handlePasswordRecovery() {
-  const email = document.getElementById('forgotEmail').value;
+function handleAuth(event) {
+  event.preventDefault();
   
-  try {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://nullweb.es'
-    });
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const name = document.getElementById('name').value;
+  const isRegistering = document.getElementById('nameField').classList.contains('hidden') === false;
+  
+  if (isRegistering) {
+    // Registro
+    const existingUser = users.find(u => u.email === email);
+    if (existingUser) {
+      alert('Este email ya está registrado');
+      return;
+    }
     
-    if (error) throw error;
+    const newUser = {
+      id: Date.now(),
+      name: name || email.split('@')[0],
+      email: email,
+      password: password,
+      createdAt: new Date().toISOString()
+    };
     
-    alert(`Se ha enviado un email a ${email} con instrucciones para recuperar tu contraseña.`);
+    users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(users));
+    currentUser = newUser;
+    localStorage.setItem('currentUser', JSON.stringify(newUser));
+    
+    alert('¡Registro exitoso! Bienvenido a NILKON');
+    updateLoginButton();
     closeAuthModal();
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Error: ' + (error.message || 'No se pudo enviar el email'));
+  } else {
+    // Login
+    const user = users.find(u => u.email === email && u.password === password);
+    
+    if (user) {
+      currentUser = user;
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      alert(`¡Bienvenido de nuevo, ${user.name}!`);
+      updateLoginButton();
+      closeAuthModal();
+    } else {
+      alert('Email o contraseña incorrectos');
+    }
   }
 }
 
+function handlePasswordRecovery() {
+  const email = document.getElementById('forgotEmail').value;
+  const user = users.find(u => u.email === email);
+  
+  if (user) {
+    alert(`Instrucciones de recuperación enviadas a ${email}\n\nEn un sistema real, recibirías un email con un enlace para restablecer tu contraseña.`);
+  } else {
+    alert('No se encontró ninguna cuenta con este email');
+  }
+}
+
+function updateLoginButton() {
+  const btn = document.getElementById('loginButtonText');
+  if (currentUser) {
+    btn.textContent = currentUser.name;
+  } else {
+    btn.textContent = 'Iniciar Sesión';
+  }
+}
+
+// Verificar si es el dueño
 function isOwner() {
   return currentUser && currentUser.email === ownerEmail;
 }
 
-// ========== FUNCIONES DE FOTOS ==========
-async function loadPhotos() {
-  try {
-    const { data, error } = await supabase
-      .from('photos')
-      .select('*')
-      .order('created_at', { ascending: false });
-    
-    if (error) {
-      console.error('Error cargando fotos desde Supabase:', error);
-      // Cargar fotos locales como fallback
-      photos = getLocalPhotos();
-      renderGallery();
-      return;
-    }
-    
-    if (data && data.length > 0) {
-      photos = data;
-      renderGallery();
-    } else {
-      console.log('No hay fotos en la base de datos. Cargando fotos locales.');
-      photos = getLocalPhotos();
-      renderGallery();
-    }
-  } catch (error) {
-    console.error('Error inesperado al cargar fotos:', error);
-    photos = getLocalPhotos();
-    renderGallery();
+// Cargar usuario si existe
+function loadUser() {
+  const savedUser = localStorage.getItem('currentUser');
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
+    updateLoginButton();
   }
 }
 
-function getLocalPhotos() {
-  return [
-    {
-      id: 1,
-      src: "loup.jpeg",
-      title: "Ajustes",
-      camera: "Cámara: Nikon d5200",
-      settings: "Configuración: f5.6, 1/800s, ISO 800, 127mm"
-    },
-    {
-      id: 2,
-      src: "R1-05855-0034.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Minolta x300s",
-      settings: "Film: KODAK GOLD 200"
-    },
-    {
-      id: 3,
-      src: "R1-05855-0027.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Minolta x300s",
-      settings: "Film: KODAK GOLD 200"
-    },
-    {
-      id: 4,
-      src: "DSC_0045.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Nikon d5200",
-      settings: "Configuración: f/5.6, 1/320s, ISO 640, 72mm"
-    },
-    {
-      id: 5,
-      src: "IMG_5959.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Minolta x300s",
-      settings: "Film: KODAK GOLD 200"
-    },
-    {
-      id: 6,
-      src: "R1-05848-0018.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Minolta x300s",
-      settings: "Film: KODAK GOLD 200"
-    },
-    {
-      id: 7,
-      src: "IMG_5976.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Minolta x300s",
-      settings: "Film: KODAK GOLD 200"
-    },
-    {
-      id: 8,
-      src: "DSC_0098.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Nikon d5200",
-      settings: "Configuración: f5.6, 1/500s, ISO 1600, 31mm"
-    },
-    {
-      id: 9,
-      src: "DSC_0118.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Nikon d5200",
-      settings: "Configuración: f5.6, 1/800, ISO 800, 157mm"
-    },
-    {
-      id: 10,
-      src: "IMG_5969.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Minolta x300s",
-      settings: "Film: KODAK GOLD 200"
-    },
-    {
-      id: 11,
-      src: "DSC_0189.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Nikon d5200",
-      settings: "Configuración: f5.6, 1/1250s, ISO 100, 135mm"
-    },
-    {
-      id: 12,
-      src: "R1-05848-0004.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Minolta x300s",
-      settings: "Film: KODAK GOLD 200"
-    },
-    {
-      id: 13,
-      src: "WhatsApp.jpeg",
-      title: "Ajustes",
-      camera: "Cámara: Nikon d5200",
-      settings: "Configuración: f5.6, 1/800, ISO 800, 48mm"
-    },
-    {
-      id: 14,
-      src: "IMG_5964.JPG",
-      title: "Ajustes",
-      camera: "Cámara: Minolta x300s",
-      settings: "Film: KODAK GOLD 200"
-    }
-  ];
-}
+// Sistema de Fotos
+const photos = [
+  {
+    id: 1,
+    src: "loup.jpeg",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f5.6, 1/800s, ISO 800, 127mm"
+  },
+  {
+    id: 2,
+    src: "R1-05855-0034.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 3,
+    src: "R1-05855-0027.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 4,
+    src: "DSC_0045.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f/5.6, 1/320s, ISO 640, 72mm"
+  },
+  {
+    id: 5,
+    src: "IMG_5959.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 6,
+    src: "R1-05848-0018.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 7,
+    src: "IMG_5976.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 8,
+    src: "DSC_0098.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f5.6, 1/500s, ISO 1600, 31mm"
+  },
+  {
+    id: 9,
+    src: "DSC_0118.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f5.6, 1/800, ISO 800, 157mm"
+  },
+  {
+    id: 10,
+    src: "IMG_5969.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 11,
+    src: "DSC_0189.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f5.6, 1/1250s, ISO 100, 135mm"
+  },
+  {
+    id: 12,
+    src: "R1-05848-0004.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 13,
+    src: "WhatsApp.jpeg",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f5.6, 1/800, ISO 800, 48mm"
+  },
+  {
+    id: 14,
+    src: "IMG_5964.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  }
+];
 
-function renderGallery() {
-  const gallery = document.getElementById('gallery');
-  gallery.innerHTML = '';
-  
-  photos.forEach(photo => {
-    const card = document.createElement('div');
-    card.className = 'photo-card bg-white rounded-3xl overflow-hidden cursor-pointer';
-    card.innerHTML = `
-      <img src="${photo.src}" alt="${photo.title}" class="w-full h-80 object-cover" />
-    `;
-    card.onclick = () => openModal(photo);
-    gallery.appendChild(card);
-  });
-}
+let currentPhoto = null;
 
-// ========== FUNCIONES DE OBSERVACIONES ==========
-async function openModal(photo) {
+// Generar galería automáticamente - MOSTRAR TODAS LAS FOTOS
+const gallery = document.getElementById('gallery');
+photos.forEach(photo => {
+  const card = document.createElement('div');
+  card.className = 'photo-card bg-white rounded-3xl overflow-hidden cursor-pointer';
+  card.innerHTML = `
+    <img src="${photo.src}" alt="${photo.title}" class="w-full h-80 object-cover" />
+  `;
+  card.onclick = () => openModal(photo);
+  gallery.appendChild(card);
+});
+
+function openModal(photo) {
   currentPhoto = photo;
   
   document.getElementById('modalTitle').innerText = photo.title;
@@ -699,7 +667,7 @@ async function openModal(photo) {
   document.getElementById('modalImage').src = photo.src;
   
   // Cargar observaciones
-  await loadObservations();
+  loadObservations();
   
   const modal = document.getElementById('modal');
   modal.classList.remove('hidden');
@@ -716,63 +684,65 @@ function closeModal() {
   }, 300);
 }
 
-async function loadObservations() {
-  if (!currentPhoto) return;
-  
+function loadObservations() {
   const obsList = document.getElementById('observationsList');
   const noObs = document.getElementById('noObservations');
   const newBadge = document.getElementById('newBadge');
   
-  obsList.innerHTML = '<div class="text-center py-4">Cargando...</div>';
-  noObs.style.display = 'none';
+  // Filtrar observaciones según quién es el usuario
+  let filteredObs = [];
   
-  try {
-    let query = supabase
-      .from('observations')
-      .select('*')
-      .eq('photo_id', currentPhoto.id)
-      .order('created_at', { ascending: true });
+  if (isOwner()) {
+    // Dueño: ve TODAS las observaciones de esta foto
+    filteredObs = observations.filter(obs => obs.photoId === currentPhoto.id);
+  } else if (currentUser) {
+    // Usuario: ve solo SUS observaciones de esta foto
+    filteredObs = observations.filter(obs => 
+      obs.photoId === currentPhoto.id && obs.userId === currentUser.id
+    );
+  }
+  
+  // Mostrar u ocultar el badge de "Nuevo"
+  if (currentUser && !isOwner()) {
+    const userPhotoKey = `${currentUser.id}_${currentPhoto.id}`;
+    const lastViewed = localStorage.getItem(`lastViewed_${userPhotoKey}`);
+    const hasNew = filteredObs.some(obs => !lastViewed || new Date(obs.timestamp) > new Date(lastViewed));
     
-    // Si no es dueño, solo ver observaciones propias
-    if (!isOwner() && currentUser) {
-      query = query.eq('user_id', currentUser.id);
-    }
-    
-    const { data, error } = await query;
-    
-    if (error) throw error;
-    
-    if (!data || data.length === 0) {
-      obsList.innerHTML = '';
-      noObs.style.display = 'block';
+    if (hasNew && filteredObs.length > 0) {
+      newBadge.style.display = 'inline';
+    } else {
       newBadge.style.display = 'none';
-      return;
     }
     
+    // Actualizar timestamp de última visualización
+    localStorage.setItem(`lastViewed_${userPhotoKey}`, new Date().toISOString());
+  }
+  
+  // Renderizar observaciones
+  if (filteredObs.length === 0) {
+    obsList.innerHTML = '';
+    noObs.style.display = 'block';
+  } else {
     noObs.style.display = 'none';
-    
-    obsList.innerHTML = data.map(obs => {
-      const isOwnerObs = obs.user_email === ownerEmail;
+    obsList.innerHTML = filteredObs.map(obs => {
+      const user = users.find(u => u.id === obs.userId) || { name: 'Usuario', email: 'desconocido' };
+      const isOwnerObs = user.email === ownerEmail;
       
       const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
-      const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : obs.user_name;
+      const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : `${user.name}`;
       
       return `
         <div class="${obsClass}">
           <div class="user-name">${userNameDisplay}</div>
           <div>${obs.text}</div>
-          <div class="timestamp">${new Date(obs.created_at).toLocaleString('es-ES')}</div>
+          <div class="timestamp">${new Date(obs.timestamp).toLocaleString('es-ES')}</div>
         </div>
       `;
     }).join('');
-    
-  } catch (error) {
-    console.error('Error cargando observaciones:', error);
-    obsList.innerHTML = '<p class="text-red-500 text-sm">Error al cargar observaciones</p>';
   }
 }
 
-async function submitObservation() {
+function submitObservation() {
   if (!currentUser) {
     if (confirm('Debes iniciar sesión para enviar observaciones. ¿Quieres registrarte ahora?')) {
       openLoginModal();
@@ -786,63 +756,38 @@ async function submitObservation() {
     return;
   }
   
-  try {
-    const { error } = await supabase
-      .from('observations')
-      .insert([
-        {
-          photo_id: currentPhoto.id,
-          user_id: currentUser.id,
-          user_name: currentUser.user_metadata?.name || currentUser.email.split('@')[0],
-          user_email: currentUser.email,
-          text: text
-        }
-      ]);
-    
-    if (error) throw error;
-    
-    // Limpiar y recargar
-    document.getElementById('observationInput').value = '';
-    await loadObservations();
-    
-    alert('✓ Observación enviada');
-    
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Error al enviar: ' + error.message);
-  }
+  // Guardar observación
+  const newObs = {
+    id: Date.now(),
+    photoId: currentPhoto.id,
+    userId: currentUser.id,
+    text: text,
+    timestamp: new Date().toISOString()
+  };
+  
+  observations.push(newObs);
+  localStorage.setItem('photoObservations', JSON.stringify(observations));
+  
+  // Limpiar y recargar
+  document.getElementById('observationInput').value = '';
+  loadObservations();
+  
+  // Mostrar mensaje temporal
+  const sentMsg = document.createElement('div');
+  sentMsg.className = 'observation-sent';
+  sentMsg.textContent = '✓ Enviado';
+  sentMsg.style.display = 'block';
+  
+  const submitContainer = document.querySelector('.submit-observation');
+  submitContainer.parentNode.insertBefore(sentMsg, submitContainer.nextSibling);
+  
+  setTimeout(() => {
+    sentMsg.remove();
+  }, 1500);
 }
 
-// ========== INICIALIZACIÓN ==========
-async function init() {
-  // Verificar usuario actual
-  const { data, error } = await supabase.auth.getUser();
-  currentUser = data.user;
-  
-  if (currentUser) {
-    document.getElementById('loginButtonText').textContent = currentUser.user_metadata?.name || currentUser.email.split('@')[0];
-    
-    // Cargar fotos
-    await loadPhotos();
-  } else {
-    document.getElementById('loginButtonText').textContent = 'Iniciar Sesión';
-  }
-  
-  // Escuchar cambios de autenticación
-  supabase.auth.onAuthStateChange((event, session) => {
-    currentUser = session?.user || null;
-    
-    if (currentUser) {
-      document.getElementById('loginButtonText').textContent = currentUser.user_metadata?.name || currentUser.email.split('@')[0];
-      loadPhotos();
-    } else {
-      document.getElementById('loginButtonText').textContent = 'Iniciar Sesión';
-    }
-  });
-}
-
-// Iniciar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', init);
+// Inicializar
+loadUser();
 </script>
 
 </body>
