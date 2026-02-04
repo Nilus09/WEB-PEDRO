@@ -6,7 +6,7 @@
   
   <!-- SEO BÁSICO -->
   <title>NILKON | Fotografía & Portafolio</title>
-  <meta name="description" content="NILKON -  Fotografía analógica y digital. Portafolio con trabajos en film KODAK GOLD 200 y Nikon d5200.">
+  <meta name="description" content="NILKON - Fotografía analógica y digital. Portafolio con trabajos en film KODAK GOLD 200 y Nikon d5200.">
   <meta name="keywords" content="NILKON, fotografia, fotografo, portfolio, fotografias, Minolta x300s, Nikon d5200, KODAK GOLD 200, film, fotografia analogica">
   <meta name="author" content="NILKON">
   <meta name="robots" content="index, follow">
@@ -49,7 +49,12 @@
   </script>
   
   <script src="https://cdn.tailwindcss.com"></script>
-
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  
   <style>
     body {
       background-color: #f5f5f7;
@@ -80,11 +85,198 @@
       transform: scale(1) translateY(0);
       opacity: 1;
     }
+
+    /* Login Modal */
+    .login-modal {
+      background: white;
+      border-radius: 20px;
+      max-width: 400px;
+      width: 90%;
+      padding: 2rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+
+    .auth-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    .auth-input:focus {
+      outline: none;
+      border-color: #007AFF;
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .login-btn {
+      background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+      color: white;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+    }
+
+    .forgot-btn {
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    .forgot-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .register-link {
+      color: #007AFF;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    /* Observaciones */
+    .observations-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .observations-section h4 {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .user-observation {
+      background: #f0f7ff;
+      border-left: 3px solid #007AFF;
+      padding: 10px 12px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .user-observation .user-name {
+      font-weight: 600;
+      color: #007AFF;
+      font-size: 12px;
+    }
+
+    .user-observation .timestamp {
+      color: #999;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    .owner-observation {
+      background: #fff3cd;
+      border-left: 3px solid #ffc107;
+      padding: 10px 12px;
+      border-radius: 0 8px 8px 0;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+
+    .empty-observations {
+      color: #999;
+      font-style: italic;
+      text-align: center;
+      padding: 12px;
+    }
+
+    .submit-observation {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .submit-observation textarea {
+      flex: 1;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 10px;
+      font-size: 14px;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .submit-observation button {
+      background: #007AFF;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 0 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .submit-observation button:hover {
+      background: #0051D5;
+    }
   </style>
 </head>
 
-<!-- RESTO DEL CÓDIGO IGUAL, SIN CAMBIOS -->
 <body class="text-gray-900">
+
+<!-- Login/Registro Modal -->
+<div id="authModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+  <div class="login-modal">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-semibold" id="authTitle">Iniciar Sesión</h2>
+      <button onclick="closeAuthModal()" class="text-2xl text-gray-500 hover:text-gray-700">&times;</button>
+    </div>
+    
+    <form id="authForm" onsubmit="handleAuth(event)">
+      <div class="mb-4">
+        <label class="block text-sm font-medium mb-2">Email</label>
+        <input type="email" id="email" class="auth-input" required placeholder="tu@email.com">
+      </div>
+      
+      <div class="mb-4" id="passwordField">
+        <label class="block text-sm font-medium mb-2">Contraseña</label>
+        <input type="password" id="password" class="auth-input" required placeholder="••••••••">
+      </div>
+      
+      <div class="mb-4 hidden" id="nameField">
+        <label class="block text-sm font-medium mb-2">Nombre</label>
+        <input type="text" id="name" class="auth-input" placeholder="Tu nombre">
+      </div>
+      
+      <button type="submit" class="auth-btn login-btn mb-3" id="submitBtn">Iniciar Sesión</button>
+      
+      <div class="text-center">
+        <span class="block mt-2">
+          <span class="text-sm text-gray-600">¿No tienes cuenta? </span>
+          <button type="button" onclick="toggleRegister()" class="register-link">Registrarse</button>
+        </span>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Header con Login -->
+<header class="max-w-6xl mx-auto px-6 py-6 flex justify-between items-center">
+  <div class="text-2xl font-bold">NILKON</div>
+  <button onclick="openLoginModal()" class="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition">
+    <span id="loginButtonText">Iniciar Sesión</span>
+  </button>
+</header>
 
 <!-- Presentación -->
 <section class="max-w-6xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
@@ -99,8 +291,6 @@
 
   <div class="flex justify-center">
     <img src="WhatsApp Image 2026-01-24 at 20.44.35.jpeg" alt="Foto de perfil" class="w-72 h-72 object-cover rounded-xl shadow-lg" />
-      
-    </div>
   </div>
 </section>
 
@@ -114,7 +304,7 @@
   <!-- Las fotos se insertarán aquí con JavaScript -->
 </section>
 
-<!-- Modal -->
+<!-- Modal de Foto -->
 <div id="modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
   <div class="modal-content bg-white rounded-3xl max-w-4xl w-full mx-auto p-6 relative">
     <button onclick="closeModal()" class="absolute top-4 right-6 text-2xl text-gray-500">&times;</button>
@@ -127,7 +317,22 @@
       <div>
         <h3 id="modalTitle" class="text-2xl font-semibold mb-4">Título</h3>
         <p id="modalCamera" class="text-gray-700 mb-2"></p>
-        <p id="modalSettings" class="text-gray-700"></p>
+        <p id="modalSettings" class="text-gray-700 mb-4"></p>
+        
+        <!-- Observaciones privadas -->
+        <div id="observationsSection" class="observations-section">
+          <h4>Observaciones</h4>
+          
+          <!-- Lista de observaciones -->
+          <div id="observationsList"></div>
+          <div id="noObservations" class="empty-observations">No hay observaciones aún</div>
+          
+          <!-- Formulario para enviar observación -->
+          <div class="submit-observation">
+            <textarea id="observationInput" placeholder="Escribe tu observación sobre esta foto..."></textarea>
+            <button type="button" onclick="submitObservation()">Enviar</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -138,12 +343,12 @@
   <div class="max-w-4xl mx-auto px-6 text-center">
     <h2 class="text-3xl font-semibold mb-6">segueix-me :></h2>
     
-    <!-- Botón de Instagram -->
+    <!-- Botón de Instagram (sin color morado) -->
     <a 
       href="https://www.instagram.com/niilrp/" 
       target="_blank" 
       rel="noopener noreferrer"
-      class="inline-flex items-center justify-center gap-3 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white font-medium py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-pink-400 focus:ring-opacity-50"
+      class="inline-flex items-center justify-center gap-3 bg-black hover:bg-gray-800 text-white font-medium py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50"
     >
       <!-- SVG del logo de Instagram -->
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -156,111 +361,155 @@
   </div>
 </section>
 
+<!-- Footer con Copyright estilo Apple -->
+<footer class="bg-white py-8">
+  <div class="max-w-6xl mx-auto px-6 text-center text-sm text-gray-600">
+    <p>© 2026 NILKON. Todos los derechos reservados.</p>
+  </div>
+</footer>
+
 <script>
-// 👇 EDITA ESTE ARRAY PARA AÑADIR TUS FOTOS
-const photos = [
-  {
-    src: "loup.jpeg",
-    title: "Ajustes",
-    camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f5.6, 1/800s, ISO 800, 127mm"
-  },
-  {
-    src: "R1-05855-0034.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
-    settings: "Film: KODAK GOLD 200"
-  },
-  {
-    src: "R1-05855-0027.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
-    settings: "Film: KODAK GOLD 200"
-  },
-  {
-    src: "DSC_0045.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f/5.6, 1/320s, ISO 640, 72mm"
-  },
-   {
-    src: "IMG_5959.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
-    settings: "Film: KODAK GOLD 200"
-  },
-   {
-    src: "R1-05848-0018.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
-    settings: "Film: KODAK GOLD 200"
-  },
-  {
-    src: "IMG_5976.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
-    settings: "Film: KODAK GOLD 200"
-  },
-  {
-    src: "DSC_0098.JPG",
-    title: "Ajustes",
-   camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f5.6, 1/500s, ISO 1600, 31mm"
-  },
-  {
-    src: "DSC_0118.JPG",
-    title: "Ajustes",
-   camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f5.6, 1/800, ISO 800, 157mm"
-  },
-  {
-    src: "IMG_5969.JPG",
-    title: "Ajustes",
-   camera: "Cámara: Minolta x300s",
-    settings: "Film: KODAK GOLD 200"
-  },
-  {
-    src: "DSC_0189.JPG",
-    title: "Ajustes",
-   camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f5.6, 1/1250s, ISO 100, 135mm"
-  },
-  {
-    src: "R1-05848-0004.JPG",
-    title: "Ajustes",
-   camera: "Cámara: Minolta x300s",
-    settings: "Film: KODAK GOLD 200"
-  },{
-    src: "WhatsApp.jpeg",
-    title: "Ajustes",
-   camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f5.6, 1/800, ISO 800, 48mm"
-  },{
-    src: "IMG_5964.JPG",
-    title: "Ajustes",
-   camera: "Cámara: Minolta x300s",
-    settings: "Film: KODAK GOLD 200"
-  },
-];
+// ========== CONFIGURACIÓN DE FIREBASE ==========
+// ⚠️ REEMPLAZA ESTO CON TU CONFIGURACIÓN DE FIREBASE ⚠️
+const firebaseConfig = {
+  apiKey: "AIzaSyCjVuruI6VDk9BgBud5WSgUZUnhLBnUfLw",
+  authDomain: "nilkon.firebaseapp.com",
+  projectId: "nilkon",
+  storageBucket: "nilkon.firebasestorage.app",
+  messagingSenderId: "344343341537",
+  appId: "1:344343341537:web:539bb44ab1fc447f0e4aa0",
+  measurementId: "G-BSR12CFHCG"
+};
 
-// Generar galería automáticamente
-const gallery = document.getElementById('gallery');
-photos.forEach(photo => {
-  const card = document.createElement('div');
-  card.className = 'photo-card bg-white rounded-3xl overflow-hidden cursor-pointer';
-  card.innerHTML = `
-    <img src="${photo.src}" alt="${photo.title}" class="w-full h-80 object-cover" />
-  `;
-  card.onclick = () => openModal(photo.title, photo.camera, photo.settings, photo.src);
-  gallery.appendChild(card);
-});
+// Tu email de dueño
+const ownerEmail = "nilelpeque@gmail.com";
 
-function openModal(title, camera, settings, imgSrc) {
-  document.getElementById('modalTitle').innerText = title;
-  document.getElementById('modalCamera').innerText = camera;
-  document.getElementById('modalSettings').innerText = settings;
-  document.getElementById('modalImage').src = imgSrc;
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
+// ========== VARIABLES GLOBALES ==========
+let currentUser = null;
+let photos = [];
+let currentPhoto = null;
+
+// ========== FUNCIONES DE AUTENTICACIÓN ==========
+function openLoginModal() {
+  document.getElementById('authModal').classList.remove('hidden');
+  document.getElementById('authModal').classList.add('flex');
+  resetAuthForm();
+}
+
+function closeAuthModal() {
+  document.getElementById('authModal').classList.remove('flex');
+  document.getElementById('authModal').classList.add('hidden');
+  resetAuthForm();
+}
+
+function resetAuthForm() {
+  document.getElementById('authForm').reset();
+  document.getElementById('authTitle').textContent = 'Iniciar Sesión';
+  document.getElementById('submitBtn').textContent = 'Iniciar Sesión';
+  document.getElementById('submitBtn').className = 'auth-btn login-btn mb-3';
+  document.getElementById('nameField').classList.add('hidden');
+}
+
+function toggleRegister() {
+  const isRegistering = document.getElementById('nameField').classList.contains('hidden');
+  
+  if (isRegistering) {
+    document.getElementById('authTitle').textContent = 'Crear Cuenta';
+    document.getElementById('submitBtn').textContent = 'Registrarse';
+    document.getElementById('submitBtn').className = 'auth-btn login-btn mb-3';
+    document.getElementById('nameField').classList.remove('hidden');
+  } else {
+    resetAuthForm();
+  }
+}
+
+async function handleAuth(event) {
+  event.preventDefault();
+  
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const name = document.getElementById('name').value;
+  const isRegistering = document.getElementById('nameField').classList.contains('hidden') === false;
+  
+  const btn = document.getElementById('submitBtn');
+  const originalText = btn.textContent;
+  btn.textContent = 'Cargando...';
+  
+  try {
+    if (isRegistering) {
+      // Registro
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      await userCredential.user.updateProfile({ displayName: name || email.split('@')[0] });
+      alert('¡Registro exitoso! Bienvenido a NILKON');
+    } else {
+      // Login
+      await auth.signInWithEmailAndPassword(email, password);
+      alert(`¡Bienvenido de nuevo!`);
+    }
+    
+    closeAuthModal();
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error: ' + error.message);
+  } finally {
+    btn.textContent = originalText;
+  }
+}
+
+function isOwner() {
+  return currentUser && currentUser.email === ownerEmail;
+}
+
+// ========== FUNCIONES DE FOTOS ==========
+async function loadPhotos() {
+  try {
+    const snapshot = await db.collection('photos').orderBy('createdAt', 'desc').get();
+    
+    if (snapshot.empty) {
+      console.log('No hay fotos en la base de datos');
+      return;
+    }
+    
+    photos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderGallery();
+  } catch (error) {
+    console.error('Error cargando fotos:', error);
+    alert('Error al cargar fotos: ' + error.message);
+  }
+}
+
+function renderGallery() {
+  const gallery = document.getElementById('gallery');
+  gallery.innerHTML = '';
+  
+  photos.forEach(photo => {
+    const card = document.createElement('div');
+    card.className = 'photo-card bg-white rounded-3xl overflow-hidden cursor-pointer';
+    card.innerHTML = `
+      <img src="${photo.src}" alt="${photo.title}" class="w-full h-80 object-cover" />
+    `;
+    card.onclick = () => openModal(photo);
+    gallery.appendChild(card);
+  });
+}
+
+// ========== FUNCIONES DE OBSERVACIONES ==========
+async function openModal(photo) {
+  currentPhoto = photo;
+  
+  document.getElementById('modalTitle').innerText = photo.title;
+  document.getElementById('modalCamera').innerText = photo.camera;
+  document.getElementById('modalSettings').innerText = photo.settings;
+  document.getElementById('modalImage').src = photo.src;
+  
+  // Cargar observaciones
+  await loadObservations();
+  
   const modal = document.getElementById('modal');
   modal.classList.remove('hidden');
   modal.classList.add('flex');
@@ -275,8 +524,114 @@ function closeModal() {
     modal.classList.remove('flex');
   }, 300);
 }
+
+async function loadObservations() {
+  if (!currentPhoto) return;
+  
+  const obsList = document.getElementById('observationsList');
+  const noObs = document.getElementById('noObservations');
+  
+  obsList.innerHTML = '<div class="text-center py-4">Cargando...</div>';
+  noObs.style.display = 'none';
+  
+  try {
+    let query = db.collection('observations')
+      .where('photoId', '==', currentPhoto.id)
+      .orderBy('createdAt', 'asc');
+    
+    // Si no es dueño, solo ver observaciones propias
+    if (!isOwner() && currentUser) {
+      query = query.where('userId', '==', currentUser.uid);
+    }
+    
+    const snapshot = await query.get();
+    
+    if (snapshot.empty) {
+      obsList.innerHTML = '';
+      noObs.style.display = 'block';
+      return;
+    }
+    
+    noObs.style.display = 'none';
+    
+    obsList.innerHTML = snapshot.docs.map(doc => {
+      const obs = doc.data();
+      const isOwnerObs = obs.userEmail === ownerEmail;
+      
+      const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
+      const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : obs.userName;
+      
+      return `
+        <div class="${obsClass}">
+          <div class="user-name">${userNameDisplay}</div>
+          <div>${obs.text}</div>
+          <div class="timestamp">${new Date(obs.createdAt?.seconds * 1000).toLocaleString('es-ES')}</div>
+        </div>
+      `;
+    }).join('');
+    
+  } catch (error) {
+    console.error('Error cargando observaciones:', error);
+    obsList.innerHTML = '<p class="text-red-500 text-sm">Error al cargar observaciones</p>';
+  }
+}
+
+async function submitObservation() {
+  if (!currentUser) {
+    if (confirm('Debes iniciar sesión para enviar observaciones. ¿Quieres registrarte ahora?')) {
+      openLoginModal();
+    }
+    return;
+  }
+  
+  const text = document.getElementById('observationInput').value.trim();
+  if (!text) {
+    alert('Por favor, escribe algo antes de enviar');
+    return;
+  }
+  
+  try {
+    await db.collection('observations').add({
+      photoId: currentPhoto.id,
+      userId: currentUser.uid,
+      userName: currentUser.displayName,
+      userEmail: currentUser.email,
+      text: text,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Limpiar y recargar
+    document.getElementById('observationInput').value = '';
+    await loadObservations();
+    
+    alert('✓ Observación enviada');
+    
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error al enviar: ' + error.message);
+  }
+}
+
+// ========== INICIALIZACIÓN ==========
+// Escuchar cambios de autenticación
+auth.onAuthStateChanged(user => {
+  currentUser = user;
+  
+  if (user) {
+    document.getElementById('loginButtonText').textContent = user.displayName || user.email.split('@')[0];
+    
+    // Cargar fotos cuando el usuario inicia sesión
+    loadPhotos();
+  } else {
+    document.getElementById('loginButtonText').textContent = 'Iniciar Sesión';
+  }
+});
+
+// Cargar fotos si ya hay usuario
+if (currentUser) {
+  loadPhotos();
+}
 </script>
 
 </body>
 </html>
-
