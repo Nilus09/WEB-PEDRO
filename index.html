@@ -49,12 +49,7 @@
   </script>
   
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  
+
   <style>
     body {
       background-color: #f5f5f7;
@@ -147,7 +142,18 @@
       cursor: pointer;
     }
 
-    /* Observaciones */
+    /* Observaciones privadas */
+    .observations-box {
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      padding: 12px;
+      margin-top: 12px;
+      background: #f8f9fa;
+      font-size: 14px;
+      min-height: 80px;
+      resize: vertical;
+    }
+
     .observations-section {
       margin-top: 20px;
       padding-top: 20px;
@@ -229,6 +235,23 @@
     .submit-observation button:hover {
       background: #0051D5;
     }
+
+    .observation-sent {
+      color: #00C853;
+      font-size: 13px;
+      margin-top: 8px;
+      text-align: right;
+      display: none;
+    }
+
+    .new-observation-badge {
+      background: #00C853;
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+    }
   </style>
 </head>
 
@@ -261,12 +284,21 @@
       <button type="submit" class="auth-btn login-btn mb-3" id="submitBtn">Iniciar Sesión</button>
       
       <div class="text-center">
+        <span class="text-sm text-gray-600">¿Olvidaste tu contraseña? </span>
+        <button type="button" onclick="toggleForgotPassword()" class="text-sm text-blue-600 hover:underline">Recuperar</button>
         <span class="block mt-2">
           <span class="text-sm text-gray-600">¿No tienes cuenta? </span>
           <button type="button" onclick="toggleRegister()" class="register-link">Registrarse</button>
         </span>
       </div>
     </form>
+    
+    <div id="forgotPasswordSection" class="hidden">
+      <p class="text-sm text-gray-600 mb-4">Ingresa tu email y te enviaremos instrucciones para recuperar tu contraseña.</p>
+      <input type="email" id="forgotEmail" class="auth-input" placeholder="tu@email.com">
+      <button onclick="handlePasswordRecovery()" class="auth-btn login-btn mb-3">Enviar Instrucciones</button>
+      <button onclick="toggleForgotPassword()" class="auth-btn forgot-btn">Volver</button>
+    </div>
   </div>
 </div>
 
@@ -321,7 +353,10 @@
         
         <!-- Observaciones privadas -->
         <div id="observationsSection" class="observations-section">
-          <h4>Observaciones</h4>
+          <h4>
+            Observaciones
+            <span id="newBadge" class="new-observation-badge" style="display:none;">Nuevo</span>
+          </h4>
           
           <!-- Lista de observaciones -->
           <div id="observationsList"></div>
@@ -369,32 +404,14 @@
 </footer>
 
 <script>
-// ========== CONFIGURACIÓN DE FIREBASE ==========
-// ⚠️ REEMPLAZA ESTO CON TU CONFIGURACIÓN DE FIREBASE ⚠️
-const firebaseConfig = {
-  apiKey: "AIzaSyCjVuruI6VDk9BgBud5WSgUZUnhLBnUfLw",
-  authDomain: "nilkon.firebaseapp.com",
-  projectId: "nilkon",
-  storageBucket: "nilkon.firebasestorage.app",
-  messagingSenderId: "344343341537",
-  appId: "1:344343341537:web:539bb44ab1fc447f0e4aa0",
-  measurementId: "G-BSR12CFHCG"
-};
-
-// Tu email de dueño
-const ownerEmail = "nilelpeque@gmail.com";
-
-// Inicializar Firebase
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// ========== VARIABLES GLOBALES ==========
+// Sistema de Autenticación
 let currentUser = null;
-let photos = [];
-let currentPhoto = null;
+const users = JSON.parse(localStorage.getItem('users')) || [];
+const ownerEmail = 'nilkon@nullweb.es'; // ⚠️ CAMBIA ESTO POR TU EMAIL REAL
 
-// ========== FUNCIONES DE AUTENTICACIÓN ==========
+// Observaciones (almacenadas por foto)
+let observations = JSON.parse(localStorage.getItem('photoObservations')) || [];
+
 function openLoginModal() {
   document.getElementById('authModal').classList.remove('hidden');
   document.getElementById('authModal').classList.add('flex');
@@ -413,6 +430,8 @@ function resetAuthForm() {
   document.getElementById('submitBtn').textContent = 'Iniciar Sesión';
   document.getElementById('submitBtn').className = 'auth-btn login-btn mb-3';
   document.getElementById('nameField').classList.add('hidden');
+  document.getElementById('forgotPasswordSection').classList.add('hidden');
+  document.getElementById('passwordField').classList.remove('hidden');
 }
 
 function toggleRegister() {
@@ -428,7 +447,20 @@ function toggleRegister() {
   }
 }
 
-async function handleAuth(event) {
+function toggleForgotPassword() {
+  const section = document.getElementById('forgotPasswordSection');
+  const form = document.getElementById('authForm');
+  
+  if (section.classList.contains('hidden')) {
+    section.classList.remove('hidden');
+    form.classList.add('hidden');
+  } else {
+    section.classList.add('hidden');
+    form.classList.remove('hidden');
+  }
+}
+
+function handleAuth(event) {
   event.preventDefault();
   
   const email = document.getElementById('email').value;
@@ -436,70 +468,197 @@ async function handleAuth(event) {
   const name = document.getElementById('name').value;
   const isRegistering = document.getElementById('nameField').classList.contains('hidden') === false;
   
-  const btn = document.getElementById('submitBtn');
-  const originalText = btn.textContent;
-  btn.textContent = 'Cargando...';
-  
-  try {
-    if (isRegistering) {
-      // Registro
-      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-      await userCredential.user.updateProfile({ displayName: name || email.split('@')[0] });
-      alert('¡Registro exitoso! Bienvenido a NILKON');
-    } else {
-      // Login
-      await auth.signInWithEmailAndPassword(email, password);
-      alert(`¡Bienvenido de nuevo!`);
+  if (isRegistering) {
+    // Registro
+    const existingUser = users.find(u => u.email === email);
+    if (existingUser) {
+      alert('Este email ya está registrado');
+      return;
     }
     
+    const newUser = {
+      id: Date.now(),
+      name: name || email.split('@')[0],
+      email: email,
+      password: password,
+      createdAt: new Date().toISOString()
+    };
+    
+    users.push(newUser);
+    localStorage.setItem('users', JSON.stringify(users));
+    currentUser = newUser;
+    localStorage.setItem('currentUser', JSON.stringify(newUser));
+    
+    alert('¡Registro exitoso! Bienvenido a NILKON');
+    updateLoginButton();
     closeAuthModal();
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Error: ' + error.message);
-  } finally {
-    btn.textContent = originalText;
+  } else {
+    // Login
+    const user = users.find(u => u.email === email && u.password === password);
+    
+    if (user) {
+      currentUser = user;
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      alert(`¡Bienvenido de nuevo, ${user.name}!`);
+      updateLoginButton();
+      closeAuthModal();
+    } else {
+      alert('Email o contraseña incorrectos');
+    }
   }
 }
 
+function handlePasswordRecovery() {
+  const email = document.getElementById('forgotEmail').value;
+  const user = users.find(u => u.email === email);
+  
+  if (user) {
+    alert(`Instrucciones de recuperación enviadas a ${email}\n\nEn un sistema real, recibirías un email con un enlace para restablecer tu contraseña.`);
+  } else {
+    alert('No se encontró ninguna cuenta con este email');
+  }
+}
+
+function updateLoginButton() {
+  const btn = document.getElementById('loginButtonText');
+  if (currentUser) {
+    btn.textContent = currentUser.name;
+  } else {
+    btn.textContent = 'Iniciar Sesión';
+  }
+}
+
+// Verificar si es el dueño
 function isOwner() {
   return currentUser && currentUser.email === ownerEmail;
 }
 
-// ========== FUNCIONES DE FOTOS ==========
-async function loadPhotos() {
-  try {
-    const snapshot = await db.collection('photos').orderBy('createdAt', 'desc').get();
-    
-    if (snapshot.empty) {
-      console.log('No hay fotos en la base de datos');
-      return;
-    }
-    
-    photos = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderGallery();
-  } catch (error) {
-    console.error('Error cargando fotos:', error);
-    alert('Error al cargar fotos: ' + error.message);
+// Cargar usuario si existe
+function loadUser() {
+  const savedUser = localStorage.getItem('currentUser');
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
+    updateLoginButton();
   }
 }
 
-function renderGallery() {
-  const gallery = document.getElementById('gallery');
-  gallery.innerHTML = '';
-  
-  photos.forEach(photo => {
-    const card = document.createElement('div');
-    card.className = 'photo-card bg-white rounded-3xl overflow-hidden cursor-pointer';
-    card.innerHTML = `
-      <img src="${photo.src}" alt="${photo.title}" class="w-full h-80 object-cover" />
-    `;
-    card.onclick = () => openModal(photo);
-    gallery.appendChild(card);
-  });
-}
+// Sistema de Fotos
+const photos = [
+  {
+    id: 1,
+    src: "loup.jpeg",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f5.6, 1/800s, ISO 800, 127mm"
+  },
+  {
+    id: 2,
+    src: "R1-05855-0034.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 3,
+    src: "R1-05855-0027.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 4,
+    src: "DSC_0045.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f/5.6, 1/320s, ISO 640, 72mm"
+  },
+  {
+    id: 5,
+    src: "IMG_5959.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 6,
+    src: "R1-05848-0018.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 7,
+    src: "IMG_5976.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 8,
+    src: "DSC_0098.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f5.6, 1/500s, ISO 1600, 31mm"
+  },
+  {
+    id: 9,
+    src: "DSC_0118.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f5.6, 1/800, ISO 800, 157mm"
+  },
+  {
+    id: 10,
+    src: "IMG_5969.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 11,
+    src: "DSC_0189.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f5.6, 1/1250s, ISO 100, 135mm"
+  },
+  {
+    id: 12,
+    src: "R1-05848-0004.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  },
+  {
+    id: 13,
+    src: "WhatsApp.jpeg",
+    title: "Ajustes",
+    camera: "Cámara: Nikon d5200",
+    settings: "Configuración: f5.6, 1/800, ISO 800, 48mm"
+  },
+  {
+    id: 14,
+    src: "IMG_5964.JPG",
+    title: "Ajustes",
+    camera: "Cámara: Minolta x300s",
+    settings: "Film: KODAK GOLD 200"
+  }
+];
 
-// ========== FUNCIONES DE OBSERVACIONES ==========
-async function openModal(photo) {
+let currentPhoto = null;
+
+// Generar galería automáticamente - MOSTRAR TODAS LAS FOTOS
+const gallery = document.getElementById('gallery');
+photos.forEach(photo => {
+  const card = document.createElement('div');
+  card.className = 'photo-card bg-white rounded-3xl overflow-hidden cursor-pointer';
+  card.innerHTML = `
+    <img src="${photo.src}" alt="${photo.title}" class="w-full h-80 object-cover" />
+  `;
+  card.onclick = () => openModal(photo);
+  gallery.appendChild(card);
+});
+
+function openModal(photo) {
   currentPhoto = photo;
   
   document.getElementById('modalTitle').innerText = photo.title;
@@ -508,7 +667,7 @@ async function openModal(photo) {
   document.getElementById('modalImage').src = photo.src;
   
   // Cargar observaciones
-  await loadObservations();
+  loadObservations();
   
   const modal = document.getElementById('modal');
   modal.classList.remove('hidden');
@@ -525,58 +684,65 @@ function closeModal() {
   }, 300);
 }
 
-async function loadObservations() {
-  if (!currentPhoto) return;
-  
+function loadObservations() {
   const obsList = document.getElementById('observationsList');
   const noObs = document.getElementById('noObservations');
+  const newBadge = document.getElementById('newBadge');
   
-  obsList.innerHTML = '<div class="text-center py-4">Cargando...</div>';
-  noObs.style.display = 'none';
+  // Filtrar observaciones según quién es el usuario
+  let filteredObs = [];
   
-  try {
-    let query = db.collection('observations')
-      .where('photoId', '==', currentPhoto.id)
-      .orderBy('createdAt', 'asc');
+  if (isOwner()) {
+    // Dueño: ve TODAS las observaciones de esta foto
+    filteredObs = observations.filter(obs => obs.photoId === currentPhoto.id);
+  } else if (currentUser) {
+    // Usuario: ve solo SUS observaciones de esta foto
+    filteredObs = observations.filter(obs => 
+      obs.photoId === currentPhoto.id && obs.userId === currentUser.id
+    );
+  }
+  
+  // Mostrar u ocultar el badge de "Nuevo"
+  if (currentUser && !isOwner()) {
+    const userPhotoKey = `${currentUser.id}_${currentPhoto.id}`;
+    const lastViewed = localStorage.getItem(`lastViewed_${userPhotoKey}`);
+    const hasNew = filteredObs.some(obs => !lastViewed || new Date(obs.timestamp) > new Date(lastViewed));
     
-    // Si no es dueño, solo ver observaciones propias
-    if (!isOwner() && currentUser) {
-      query = query.where('userId', '==', currentUser.uid);
+    if (hasNew && filteredObs.length > 0) {
+      newBadge.style.display = 'inline';
+    } else {
+      newBadge.style.display = 'none';
     }
     
-    const snapshot = await query.get();
-    
-    if (snapshot.empty) {
-      obsList.innerHTML = '';
-      noObs.style.display = 'block';
-      return;
-    }
-    
+    // Actualizar timestamp de última visualización
+    localStorage.setItem(`lastViewed_${userPhotoKey}`, new Date().toISOString());
+  }
+  
+  // Renderizar observaciones
+  if (filteredObs.length === 0) {
+    obsList.innerHTML = '';
+    noObs.style.display = 'block';
+  } else {
     noObs.style.display = 'none';
-    
-    obsList.innerHTML = snapshot.docs.map(doc => {
-      const obs = doc.data();
-      const isOwnerObs = obs.userEmail === ownerEmail;
+    obsList.innerHTML = filteredObs.map(obs => {
+      const user = users.find(u => u.id === obs.userId) || { name: 'Usuario', email: 'desconocido' };
+      const isOwnerObs = user.email === ownerEmail;
       
       const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
-      const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : obs.userName;
+      const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : `${user.name}`;
       
       return `
         <div class="${obsClass}">
           <div class="user-name">${userNameDisplay}</div>
           <div>${obs.text}</div>
-          <div class="timestamp">${new Date(obs.createdAt?.seconds * 1000).toLocaleString('es-ES')}</div>
+          <div class="timestamp">${new Date(obs.timestamp).toLocaleString('es-ES')}</div>
         </div>
       `;
     }).join('');
-    
-  } catch (error) {
-    console.error('Error cargando observaciones:', error);
-    obsList.innerHTML = '<p class="text-red-500 text-sm">Error al cargar observaciones</p>';
   }
 }
 
-async function submitObservation() {
+function submitObservation() {
   if (!currentUser) {
     if (confirm('Debes iniciar sesión para enviar observaciones. ¿Quieres registrarte ahora?')) {
       openLoginModal();
@@ -590,47 +756,38 @@ async function submitObservation() {
     return;
   }
   
-  try {
-    await db.collection('observations').add({
-      photoId: currentPhoto.id,
-      userId: currentUser.uid,
-      userName: currentUser.displayName,
-      userEmail: currentUser.email,
-      text: text,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
-    });
-    
-    // Limpiar y recargar
-    document.getElementById('observationInput').value = '';
-    await loadObservations();
-    
-    alert('✓ Observación enviada');
-    
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Error al enviar: ' + error.message);
-  }
-}
-
-// ========== INICIALIZACIÓN ==========
-// Escuchar cambios de autenticación
-auth.onAuthStateChanged(user => {
-  currentUser = user;
+  // Guardar observación
+  const newObs = {
+    id: Date.now(),
+    photoId: currentPhoto.id,
+    userId: currentUser.id,
+    text: text,
+    timestamp: new Date().toISOString()
+  };
   
-  if (user) {
-    document.getElementById('loginButtonText').textContent = user.displayName || user.email.split('@')[0];
-    
-    // Cargar fotos cuando el usuario inicia sesión
-    loadPhotos();
-  } else {
-    document.getElementById('loginButtonText').textContent = 'Iniciar Sesión';
-  }
-});
-
-// Cargar fotos si ya hay usuario
-if (currentUser) {
-  loadPhotos();
+  observations.push(newObs);
+  localStorage.setItem('photoObservations', JSON.stringify(observations));
+  
+  // Limpiar y recargar
+  document.getElementById('observationInput').value = '';
+  loadObservations();
+  
+  // Mostrar mensaje temporal
+  const sentMsg = document.createElement('div');
+  sentMsg.className = 'observation-sent';
+  sentMsg.textContent = '✓ Enviado';
+  sentMsg.style.display = 'block';
+  
+  const submitContainer = document.querySelector('.submit-observation');
+  submitContainer.parentNode.insertBefore(sentMsg, submitContainer.nextSibling);
+  
+  setTimeout(() => {
+    sentMsg.remove();
+  }, 1500);
 }
+
+// Inicializar
+loadUser();
 </script>
 
 </body>
