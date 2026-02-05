@@ -48,7 +48,13 @@
   }
   </script>
   
+  <!-- TAILWIND CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FIREBASE SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
     body {
@@ -252,6 +258,22 @@
       border-radius: 10px;
       margin-left: 6px;
     }
+
+    /* Loading Spinner */
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #007AFF;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 
@@ -281,7 +303,10 @@
         <input type="text" id="name" class="auth-input" placeholder="Tu nombre">
       </div>
       
-      <button type="submit" class="auth-btn login-btn mb-3" id="submitBtn">Iniciar Sesión</button>
+      <button type="submit" class="auth-btn login-btn mb-3" id="submitBtn">
+        <span id="submitBtnText">Iniciar Sesión</span>
+        <span id="submitSpinner" class="spinner" style="display:none;width:20px;height:20px;margin:0 auto;"></span>
+      </button>
       
       <div class="text-center">
         <span class="text-sm text-gray-600">¿Olvidaste tu contraseña? </span>
@@ -305,7 +330,7 @@
 <!-- Header con Login -->
 <header class="max-w-6xl mx-auto px-6 py-6 flex justify-between items-center">
   <div class="text-2xl font-bold">NILKON</div>
-  <button onclick="openLoginModal()" class="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition">
+  <button onclick="handleAuthButtonClick()" class="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition">
     <span id="loginButtonText">Iniciar Sesión</span>
   </button>
 </header>
@@ -358,14 +383,20 @@
             <span id="newBadge" class="new-observation-badge" style="display:none;">Nuevo</span>
           </h4>
           
+          <!-- Loading -->
+          <div id="observationsLoading" class="spinner" style="display:block;"></div>
+          
           <!-- Lista de observaciones -->
           <div id="observationsList"></div>
-          <div id="noObservations" class="empty-observations">No hay observaciones aún</div>
+          <div id="noObservations" class="empty-observations" style="display:none;">No hay observaciones aún</div>
           
           <!-- Formulario para enviar observación -->
           <div class="submit-observation">
             <textarea id="observationInput" placeholder="Escribe tu observación sobre esta foto..."></textarea>
-            <button type="button" onclick="submitObservation()">Enviar</button>
+            <button type="button" onclick="submitObservation()">
+              <span id="submitObsText">Enviar</span>
+              <span id="obsSpinner" class="spinner" style="display:none;width:15px;height:15px;"></span>
+            </button>
           </div>
         </div>
       </div>
@@ -404,13 +435,42 @@
 </footer>
 
 <script>
-// Sistema de Autenticación
-let currentUser = null;
-const users = JSON.parse(localStorage.getItem('users')) || [];
-const ownerEmail = 'nilkon@nullweb.es'; // ⚠️ CAMBIA ESTO POR TU EMAIL REAL
+// ============================================
+// CONFIGURACIÓN DE FIREBASE - ¡YA CONFIGURADO!
+// ============================================
+const firebaseConfig = {
+  apiKey: "AIzaSyA-JK1F0dPbHsmF1MLcVY85_YOjbdWtpk0",
+  authDomain: "nilkkon-29980.firebaseapp.com",
+  projectId: "nilkkon-29980",
+  storageBucket: "nilkkon-29980.firebasedatabase.app",
+  messagingSenderId: "434256758033",
+  appId: "1:434256758033:web:2fbeeadc77de6784bcb8b0"
+};
 
-// Observaciones (almacenadas por foto)
-let observations = JSON.parse(localStorage.getItem('photoObservations')) || [];
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// ============================================
+// VARIABLES GLOBALES
+// ============================================
+let currentUser = null;
+const ownerEmail = 'nilkon@nullweb.es'; // ⚠️ CAMBIA ESTO POR TU EMAIL REAL
+let currentPhoto = null;
+let observationsUnsubscribe = null;
+
+// ============================================
+// SISTEMA DE AUTENTICACIÓN
+// ============================================
+
+function handleAuthButtonClick() {
+  if (currentUser) {
+    logout();
+  } else {
+    openLoginModal();
+  }
+}
 
 function openLoginModal() {
   document.getElementById('authModal').classList.remove('hidden');
@@ -427,11 +487,12 @@ function closeAuthModal() {
 function resetAuthForm() {
   document.getElementById('authForm').reset();
   document.getElementById('authTitle').textContent = 'Iniciar Sesión';
-  document.getElementById('submitBtn').textContent = 'Iniciar Sesión';
+  document.getElementById('submitBtnText').textContent = 'Iniciar Sesión';
   document.getElementById('submitBtn').className = 'auth-btn login-btn mb-3';
   document.getElementById('nameField').classList.add('hidden');
   document.getElementById('forgotPasswordSection').classList.add('hidden');
   document.getElementById('passwordField').classList.remove('hidden');
+  document.getElementById('submitSpinner').style.display = 'none';
 }
 
 function toggleRegister() {
@@ -439,7 +500,7 @@ function toggleRegister() {
   
   if (isRegistering) {
     document.getElementById('authTitle').textContent = 'Crear Cuenta';
-    document.getElementById('submitBtn').textContent = 'Registrarse';
+    document.getElementById('submitBtnText').textContent = 'Registrarse';
     document.getElementById('submitBtn').className = 'auth-btn login-btn mb-3';
     document.getElementById('nameField').classList.remove('hidden');
   } else {
@@ -460,6 +521,18 @@ function toggleForgotPassword() {
   }
 }
 
+function showLoading(buttonId, spinnerId, textId, loadingText) {
+  document.getElementById(buttonId).disabled = true;
+  document.getElementById(spinnerId).style.display = 'block';
+  if (textId) document.getElementById(textId).textContent = loadingText;
+}
+
+function hideLoading(buttonId, spinnerId, textId, originalText) {
+  document.getElementById(buttonId).disabled = false;
+  document.getElementById(spinnerId).style.display = 'none';
+  if (textId) document.getElementById(textId).textContent = originalText;
+}
+
 function handleAuth(event) {
   event.preventDefault();
   
@@ -468,81 +541,117 @@ function handleAuth(event) {
   const name = document.getElementById('name').value;
   const isRegistering = document.getElementById('nameField').classList.contains('hidden') === false;
   
+  showLoading('submitBtn', 'submitSpinner', 'submitBtnText', isRegistering ? 'Registrando...' : 'Iniciando...');
+  
   if (isRegistering) {
-    // Registro
-    const existingUser = users.find(u => u.email === email);
-    if (existingUser) {
-      alert('Este email ya está registrado');
-      return;
-    }
-    
-    const newUser = {
-      id: Date.now(),
-      name: name || email.split('@')[0],
-      email: email,
-      password: password,
-      createdAt: new Date().toISOString()
-    };
-    
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    currentUser = newUser;
-    localStorage.setItem('currentUser', JSON.stringify(newUser));
-    
-    alert('¡Registro exitoso! Bienvenido a NILKON');
-    updateLoginButton();
-    closeAuthModal();
+    // Registro con Firebase
+    auth.createUserWithEmailAndPassword(email, password)
+      .then((userCredential) => {
+        // Guardar datos adicionales del usuario
+        return db.collection('users').doc(userCredential.user.uid).set({
+          name: name || email.split('@')[0],
+          email: email,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          isOwner: email.toLowerCase() === ownerEmail.toLowerCase()
+        });
+      })
+      .then(() => {
+        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Registrarse');
+        alert('¡Registro exitoso! Bienvenido a NILKON');
+        closeAuthModal();
+      })
+      .catch((error) => {
+        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Registrarse');
+        alert('Error: ' + error.message);
+      });
   } else {
-    // Login
-    const user = users.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-      currentUser = user;
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      alert(`¡Bienvenido de nuevo, ${user.name}!`);
-      updateLoginButton();
-      closeAuthModal();
-    } else {
-      alert('Email o contraseña incorrectos');
-    }
+    // Login con Firebase
+    auth.signInWithEmailAndPassword(email, password)
+      .then((userCredential) => {
+        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Iniciar Sesión');
+        currentUser = userCredential.user;
+        alert('¡Bienvenido de nuevo!');
+        updateLoginButton();
+        closeAuthModal();
+      })
+      .catch((error) => {
+        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Iniciar Sesión');
+        alert('Email o contraseña incorrectos');
+      });
   }
 }
 
 function handlePasswordRecovery() {
   const email = document.getElementById('forgotEmail').value;
-  const user = users.find(u => u.email === email);
   
-  if (user) {
-    alert(`Instrucciones de recuperación enviadas a ${email}\n\nEn un sistema real, recibirías un email con un enlace para restablecer tu contraseña.`);
-  } else {
-    alert('No se encontró ninguna cuenta con este email');
+  if (!email) {
+    alert('Por favor ingresa tu email');
+    return;
   }
+  
+  auth.sendPasswordResetEmail(email)
+    .then(() => {
+      alert(`Se han enviado instrucciones de recuperación a ${email}`);
+      toggleForgotPassword();
+    })
+    .catch((error) => {
+      alert('Error: ' + error.message);
+    });
+}
+
+function logout() {
+  auth.signOut().then(() => {
+    currentUser = null;
+    updateLoginButton();
+    alert('Sesión cerrada correctamente');
+  }).catch((error) => {
+    alert('Error al cerrar sesión: ' + error.message);
+  });
 }
 
 function updateLoginButton() {
   const btn = document.getElementById('loginButtonText');
   if (currentUser) {
-    btn.textContent = currentUser.name;
+    // Obtener nombre del usuario desde Firestore
+    db.collection('users').doc(currentUser.uid).get().then((doc) => {
+      if (doc.exists) {
+        btn.textContent = doc.data().name;
+      } else {
+        btn.textContent = currentUser.email.split('@')[0];
+      }
+    }).catch(() => {
+      btn.textContent = currentUser.email.split('@')[0];
+    });
   } else {
     btn.textContent = 'Iniciar Sesión';
   }
 }
 
-// Verificar si es el dueño
 function isOwner() {
-  return currentUser && currentUser.email === ownerEmail;
+  return currentUser && currentUser.email.toLowerCase() === ownerEmail.toLowerCase();
 }
 
-// Cargar usuario si existe
-function loadUser() {
-  const savedUser = localStorage.getItem('currentUser');
-  if (savedUser) {
-    currentUser = JSON.parse(savedUser);
-    updateLoginButton();
+// ============================================
+// ESCUCHADOR DE ESTADO DE AUTENTICACIÓN
+// ============================================
+auth.onAuthStateChanged((user) => {
+  currentUser = user;
+  updateLoginButton();
+  
+  if (user) {
+    // Cargar datos del usuario
+    db.collection('users').doc(user.uid).get().then((doc) => {
+      if (doc.exists) {
+        const userData = doc.data();
+        // Puedes usar userData.name, userData.isOwner, etc.
+      }
+    });
   }
-}
+});
 
-// Sistema de Fotos
+// ============================================
+// SISTEMA DE FOTOS
+// ============================================
 const photos = [
   {
     id: 1,
@@ -644,9 +753,7 @@ const photos = [
   }
 ];
 
-let currentPhoto = null;
-
-// Generar galería automáticamente - MOSTRAR TODAS LAS FOTOS
+// Generar galería
 const gallery = document.getElementById('gallery');
 photos.forEach(photo => {
   const card = document.createElement('div');
@@ -657,6 +764,10 @@ photos.forEach(photo => {
   card.onclick = () => openModal(photo);
   gallery.appendChild(card);
 });
+
+// ============================================
+// MODAL DE FOTO Y OBSERVACIONES
+// ============================================
 
 function openModal(photo) {
   currentPhoto = photo;
@@ -678,6 +789,13 @@ function openModal(photo) {
 function closeModal() {
   const modal = document.getElementById('modal');
   modal.classList.remove('modal-show');
+  
+  // Desuscribirse del listener de observaciones
+  if (observationsUnsubscribe) {
+    observationsUnsubscribe();
+    observationsUnsubscribe = null;
+  }
+  
   setTimeout(() => {
     modal.classList.add('hidden');
     modal.classList.remove('flex');
@@ -685,61 +803,71 @@ function closeModal() {
 }
 
 function loadObservations() {
+  if (!currentPhoto) return;
+  
   const obsList = document.getElementById('observationsList');
   const noObs = document.getElementById('noObservations');
-  const newBadge = document.getElementById('newBadge');
+  const loading = document.getElementById('observationsLoading');
   
-  // Filtrar observaciones según quién es el usuario
-  let filteredObs = [];
+  // Mostrar loading
+  loading.style.display = 'block';
+  obsList.innerHTML = '';
+  noObs.style.display = 'none';
   
-  if (isOwner()) {
-    // Dueño: ve TODAS las observaciones de esta foto
-    filteredObs = observations.filter(obs => obs.photoId === currentPhoto.id);
-  } else if (currentUser) {
-    // Usuario: ve solo SUS observaciones de esta foto
-    filteredObs = observations.filter(obs => 
-      obs.photoId === currentPhoto.id && obs.userId === currentUser.id
-    );
+  // Desuscribirse del listener anterior si existe
+  if (observationsUnsubscribe) {
+    observationsUnsubscribe();
   }
   
-  // Mostrar u ocultar el badge de "Nuevo"
-  if (currentUser && !isOwner()) {
-    const userPhotoKey = `${currentUser.id}_${currentPhoto.id}`;
-    const lastViewed = localStorage.getItem(`lastViewed_${userPhotoKey}`);
-    const hasNew = filteredObs.some(obs => !lastViewed || new Date(obs.timestamp) > new Date(lastViewed));
+  // Query para observaciones
+  let query = db.collection('observations')
+    .where('photoId', '==', currentPhoto.id)
+    .orderBy('timestamp', 'desc');
+  
+  // Escuchar cambios en tiempo real
+  observationsUnsubscribe = query.onSnapshot((snapshot) => {
+    loading.style.display = 'none';
     
-    if (hasNew && filteredObs.length > 0) {
-      newBadge.style.display = 'inline';
+    if (snapshot.empty) {
+      noObs.style.display = 'block';
     } else {
-      newBadge.style.display = 'none';
+      noObs.style.display = 'none';
+      
+      let html = '';
+      snapshot.forEach((doc) => {
+        const obs = doc.data();
+        const isOwnerObs = obs.isOwner || (obs.userEmail && obs.userEmail.toLowerCase() === ownerEmail.toLowerCase());
+        const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
+        const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : (obs.userName || obs.userEmail?.split('@')[0] || 'Usuario');
+        
+        // Formatear fecha
+        let dateStr = 'Reciente';
+        if (obs.timestamp && obs.timestamp.toDate) {
+          dateStr = obs.timestamp.toDate().toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+        
+        html += `
+          <div class="${obsClass}">
+            <div class="user-name">${userNameDisplay}</div>
+            <div>${obs.text}</div>
+            <div class="timestamp">${dateStr}</div>
+          </div>
+        `;
+      });
+      
+      obsList.innerHTML = html;
     }
-    
-    // Actualizar timestamp de última visualización
-    localStorage.setItem(`lastViewed_${userPhotoKey}`, new Date().toISOString());
-  }
-  
-  // Renderizar observaciones
-  if (filteredObs.length === 0) {
-    obsList.innerHTML = '';
-    noObs.style.display = 'block';
-  } else {
-    noObs.style.display = 'none';
-    obsList.innerHTML = filteredObs.map(obs => {
-      const user = users.find(u => u.id === obs.userId) || { name: 'Usuario', email: 'desconocido' };
-      const isOwnerObs = user.email === ownerEmail;
-      
-      const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
-      const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : `${user.name}`;
-      
-      return `
-        <div class="${obsClass}">
-          <div class="user-name">${userNameDisplay}</div>
-          <div>${obs.text}</div>
-          <div class="timestamp">${new Date(obs.timestamp).toLocaleString('es-ES')}</div>
-        </div>
-      `;
-    }).join('');
-  }
+  }, (error) => {
+    console.error("Error cargando observaciones: ", error);
+    loading.style.display = 'none';
+    obsList.innerHTML = `<div class="text-red-500 text-center py-4">Error al cargar observaciones</div>`;
+  });
 }
 
 function submitObservation() {
@@ -756,39 +884,63 @@ function submitObservation() {
     return;
   }
   
-  // Guardar observación
-  const newObs = {
-    id: Date.now(),
-    photoId: currentPhoto.id,
-    userId: currentUser.id,
-    text: text,
-    timestamp: new Date().toISOString()
-  };
+  showLoading('submitObsText', 'obsSpinner', null, 'Enviando...');
   
-  observations.push(newObs);
-  localStorage.setItem('photoObservations', JSON.stringify(observations));
-  
-  // Limpiar y recargar
-  document.getElementById('observationInput').value = '';
-  loadObservations();
-  
-  // Mostrar mensaje temporal
-  const sentMsg = document.createElement('div');
-  sentMsg.className = 'observation-sent';
-  sentMsg.textContent = '✓ Enviado';
-  sentMsg.style.display = 'block';
-  
-  const submitContainer = document.querySelector('.submit-observation');
-  submitContainer.parentNode.insertBefore(sentMsg, submitContainer.nextSibling);
-  
-  setTimeout(() => {
-    sentMsg.remove();
-  }, 1500);
+  // Obtener nombre del usuario
+  db.collection('users').doc(currentUser.uid).get().then((userDoc) => {
+    const userName = userDoc.exists ? userDoc.data().name : currentUser.email.split('@')[0];
+    
+    // Guardar observación en Firestore
+    db.collection('observations').add({
+      photoId: currentPhoto.id,
+      userId: currentUser.uid,
+      userEmail: currentUser.email,
+      userName: userName,
+      text: text,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      isOwner: isOwner()
+    })
+    .then(() => {
+      hideLoading('submitObsText', 'obsSpinner', 'submitObsText', 'Enviar');
+      document.getElementById('observationInput').value = '';
+      
+      // Mensaje de confirmación
+      const sentMsg = document.createElement('div');
+      sentMsg.className = 'observation-sent';
+      sentMsg.textContent = '✓ Enviado';
+      sentMsg.style.display = 'block';
+      sentMsg.style.color = '#00C853';
+      sentMsg.style.fontSize = '13px';
+      sentMsg.style.marginTop = '8px';
+      sentMsg.style.textAlign = 'right';
+      
+      const submitContainer = document.querySelector('.submit-observation');
+      const existingMsg = submitContainer.parentNode.querySelector('.observation-sent');
+      if (existingMsg) existingMsg.remove();
+      
+      submitContainer.parentNode.insertBefore(sentMsg, submitContainer.nextSibling);
+      
+      setTimeout(() => {
+        sentMsg.remove();
+      }, 1500);
+    })
+    .catch((error) => {
+      hideLoading('submitObsText', 'obsSpinner', 'submitObsText', 'Enviar');
+      alert('Error al enviar: ' + error.message);
+    });
+  }).catch((error) => {
+    hideLoading('submitObsText', 'obsSpinner', 'submitObsText', 'Enviar');
+    console.error("Error obteniendo datos de usuario: ", error);
+  });
 }
 
-// Inicializar
-loadUser();
+// ============================================
+// INICIALIZAR
+// ============================================
+// El auth state se escucha automáticamente arriba
+// Las fotos se generan automáticamente arriba
 </script>
 
 </body>
 </html>
+
