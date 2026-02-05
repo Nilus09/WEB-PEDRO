@@ -9,7 +9,7 @@
   <meta name="description" content="NILKON - Fotografía analógica y digital. Portafolio con trabajos en film KODAK GOLD 200 y Nikon d5200.">
   <meta name="keywords" content="NILKON, fotografia, fotografo, portfolio, fotografias, Minolta x300s, Nikon d5200, KODAK GOLD 200, film, fotografia analogica">
   <meta name="author" content="NILKON">
-  <meta="robots" content="index, follow">
+  <meta name="robots" content="index, follow">
   
   <!-- OPEN GRAPH (Redes Sociales) -->
   <meta property="og:title" content="NILKON | Fotografía & Portafolio">
@@ -439,7 +439,7 @@
 // CONFIGURACIÓN DE FIREBASE - ¡YA CONFIGURADO!
 // ============================================
 const firebaseConfig = {
- apiKey: "AIzaSyAhRpgmSwld3pwHNzZPMLa1edwvmeyOTi8",
+  apiKey: "AIzaSyAhRpgmSwld3pwHNzZPMLa1edwvmeyOTi8",
   authDomain: "nilkon-c423a.firebaseapp.com",
   projectId: "nilkon-c423a",
   storageBucket: "nilkon-c423a.appspot.com",
@@ -456,7 +456,7 @@ const db = firebase.firestore();
 // VARIABLES GLOBALES
 // ============================================
 let currentUser = null;
-const ownerEmail = 'nilelpeque@gmail.com'; // ⚠️ CAMBIA ESTO POR TU EMAIL REAL
+const ownerEmail = 'nilkon@nullweb.es'; // ⚠️ CAMBIA ESTO POR TU EMAIL REAL
 let currentPhoto = null;
 let observationsUnsubscribe = null;
 
@@ -819,55 +819,131 @@ function loadObservations() {
     observationsUnsubscribe();
   }
   
-  // Query para observaciones
-  let query = db.collection('observations')
-    .where('photoId', '==', currentPhoto.id)
-    .orderBy('timestamp', 'desc');
+  // Si no hay usuario autenticado, no mostrar nada
+  if (!currentUser) {
+    loading.style.display = 'none';
+    noObs.style.display = 'block';
+    return;
+  }
   
-  // Escuchar cambios en tiempo real
-  observationsUnsubscribe = query.onSnapshot((snapshot) => {
-    loading.style.display = 'none';
+  // Si es owner, ve TODAS las observaciones
+  if (isOwner()) {
+    const query = db.collection('observations')
+      .where('photoId', '==', currentPhoto.id)
+      .orderBy('timestamp', 'desc');
     
-    if (snapshot.empty) {
-      noObs.style.display = 'block';
-    } else {
-      noObs.style.display = 'none';
+    observationsUnsubscribe = query.onSnapshot((snapshot) => {
+      loading.style.display = 'none';
       
-      let html = '';
-      snapshot.forEach((doc) => {
-        const obs = doc.data();
-        const isOwnerObs = obs.isOwner || (obs.userEmail && obs.userEmail.toLowerCase() === ownerEmail.toLowerCase());
-        const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
-        const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : (obs.userName || obs.userEmail?.split('@')[0] || 'Usuario');
+      if (snapshot.empty) {
+        noObs.style.display = 'block';
+      } else {
+        noObs.style.display = 'none';
         
-        // Formatear fecha
-        let dateStr = 'Reciente';
-        if (obs.timestamp && obs.timestamp.toDate) {
-          dateStr = obs.timestamp.toDate().toLocaleString('es-ES', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-        }
+        let html = '';
+        snapshot.forEach((doc) => {
+          const obs = doc.data();
+          const isOwnerObs = obs.isOwner || (obs.userEmail && obs.userEmail.toLowerCase() === ownerEmail.toLowerCase());
+          const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
+          const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : (obs.userName || obs.userEmail?.split('@')[0] || 'Usuario');
+          
+          // Formatear fecha
+          let dateStr = 'Reciente';
+          if (obs.timestamp && obs.timestamp.toDate) {
+            dateStr = obs.timestamp.toDate().toLocaleString('es-ES', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }
+          
+          html += `
+            <div class="${obsClass}">
+              <div class="user-name">${userNameDisplay}</div>
+              <div>${obs.text}</div>
+              <div class="timestamp">${dateStr}</div>
+            </div>
+          `;
+        });
         
-        html += `
-          <div class="${obsClass}">
-            <div class="user-name">${userNameDisplay}</div>
-            <div>${obs.text}</div>
-            <div class="timestamp">${dateStr}</div>
-          </div>
-        `;
-      });
+        obsList.innerHTML = html;
+      }
+    }, (error) => {
+      console.error("Error cargando observaciones: ", error);
+      loading.style.display = 'none';
+      obsList.innerHTML = `<div class="text-red-500 text-center py-4">Error al cargar observaciones</div>`;
+    });
+  } 
+  // Si es usuario normal, ve sus observaciones + las del owner
+  else {
+    // Query para observaciones del owner
+    const ownerObsQuery = db.collection('observations')
+      .where('photoId', '==', currentPhoto.id)
+      .where('isOwner', '==', true)
+      .orderBy('timestamp', 'desc');
+    
+    // Query para observaciones del usuario actual
+    const userObsQuery = db.collection('observations')
+      .where('photoId', '==', currentPhoto.id)
+      .where('userId', '==', currentUser.uid)
+      .orderBy('timestamp', 'desc');
+    
+    // Combinar ambos queries
+    Promise.all([
+      ownerObsQuery.get(),
+      userObsQuery.get()
+    ]).then(([ownerObs, userObs]) => {
+      loading.style.display = 'none';
       
-      obsList.innerHTML = html;
-    }
-  }, (error) => {
-    console.error("Error cargando observaciones: ", error);
-    loading.style.display = 'none';
-    obsList.innerHTML = `<div class="text-red-500 text-center py-4">Error al cargar observaciones</div>`;
-  });
+      const allObs = [...ownerObs.docs, ...userObs.docs];
+      
+      if (allObs.length === 0) {
+        noObs.style.display = 'block';
+      } else {
+        noObs.style.display = 'none';
+        
+        let html = '';
+        allObs.sort((a, b) => {
+          const dateA = a.data().timestamp?.toDate() || new Date(0);
+          const dateB = b.data().timestamp?.toDate() || new Date(0);
+          return dateB - dateA;
+        }).forEach((doc) => {
+          const obs = doc.data();
+          const isOwnerObs = obs.isOwner || (obs.userEmail && obs.userEmail.toLowerCase() === ownerEmail.toLowerCase());
+          const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
+          const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : (obs.userName || obs.userEmail?.split('@')[0] || 'Usuario');
+          
+          // Formatear fecha
+          let dateStr = 'Reciente';
+          if (obs.timestamp && obs.timestamp.toDate) {
+            dateStr = obs.timestamp.toDate().toLocaleString('es-ES', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }
+          
+          html += `
+            <div class="${obsClass}">
+              <div class="user-name">${userNameDisplay}</div>
+              <div>${obs.text}</div>
+              <div class="timestamp">${dateStr}</div>
+            </div>
+          `;
+        });
+        
+        obsList.innerHTML = html;
+      }
+    }).catch((error) => {
+      console.error("Error cargando observaciones: ", error);
+      loading.style.display = 'none';
+      obsList.innerHTML = `<div class="text-red-500 text-center py-4">Error al cargar observaciones</div>`;
+    });
+  }
 }
 
 function submitObservation() {
@@ -943,4 +1019,3 @@ function submitObservation() {
 
 </body>
 </html>
-
