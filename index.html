@@ -149,17 +149,6 @@
     }
 
     /* Observaciones privadas */
-    .observations-box {
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      padding: 12px;
-      margin-top: 12px;
-      background: #f8f9fa;
-      font-size: 14px;
-      min-height: 80px;
-      resize: vertical;
-    }
-
     .observations-section {
       margin-top: 20px;
       padding-top: 20px;
@@ -187,6 +176,7 @@
       font-weight: 600;
       color: #007AFF;
       font-size: 12px;
+      margin-bottom: 2px;
     }
 
     .user-observation .timestamp {
@@ -202,6 +192,24 @@
       border-radius: 0 8px 8px 0;
       margin-bottom: 8px;
       font-size: 13px;
+    }
+
+    .owner-observation .user-name {
+      font-weight: 600;
+      color: #007AFF;
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    .owner-badge {
+      display: inline-block;
+      background: #ffc107;
+      color: #856404;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-top: 2px;
     }
 
     .empty-observations {
@@ -259,6 +267,37 @@
       margin-left: 6px;
     }
 
+    /* Botones de acción */
+    .observation-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      font-size: 11px;
+    }
+
+    .observation-actions button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #007AFF;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+
+    .observation-actions button:hover {
+      background: #e3f2fd;
+    }
+
+    .observation-actions .delete-btn {
+      color: #dc3545;
+    }
+
+    .observation-actions .delete-btn:hover {
+      background: #ffebee;
+    }
+
     /* Loading Spinner */
     .spinner {
       border: 3px solid #f3f3f3;
@@ -273,6 +312,17 @@
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
+    }
+    
+    /* Owner badge en header */
+    .owner-badge-header {
+      background: #dc3545;
+      color: white;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
     }
   </style>
 </head>
@@ -332,6 +382,7 @@
   <div class="text-2xl font-bold">NILKON</div>
   <button onclick="handleAuthButtonClick()" class="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition">
     <span id="loginButtonText">Iniciar Sesión</span>
+    <span id="ownerBadgeHeader" class="owner-badge-header hidden">owner version</span>
   </button>
 </header>
 
@@ -456,7 +507,7 @@ const db = firebase.firestore();
 // VARIABLES GLOBALES
 // ============================================
 let currentUser = null;
-const ownerEmail = 'nruiz4445@institutelpalau.com'; // ⚠️ CAMBIA ESTO POR TU EMAIL REAL
+const ownerEmail = 'nilepeque@gmail.com'; // ⚠️ TU EMAIL REAL
 let currentPhoto = null;
 let observationsUnsubscribe = null;
 
@@ -611,19 +662,30 @@ function logout() {
 
 function updateLoginButton() {
   const btn = document.getElementById('loginButtonText');
+  const ownerBadge = document.getElementById('ownerBadgeHeader');
+  
   if (currentUser) {
-    // Obtener nombre del usuario desde Firestore
-    db.collection('users').doc(currentUser.uid).get().then((doc) => {
-      if (doc.exists) {
-        btn.textContent = doc.data().name;
-      } else {
+    // Verificar si es owner
+    if (currentUser.email.toLowerCase() === ownerEmail.toLowerCase()) {
+      btn.textContent = 'NILKON';
+      ownerBadge.classList.remove('hidden');
+    } else {
+      // Obtener nombre del usuario desde Firestore
+      db.collection('users').doc(currentUser.uid).get().then((doc) => {
+        if (doc.exists) {
+          btn.textContent = doc.data().name;
+        } else {
+          btn.textContent = currentUser.email.split('@')[0];
+        }
+      }).catch(() => {
         btn.textContent = currentUser.email.split('@')[0];
-      }
-    }).catch(() => {
-      btn.textContent = currentUser.email.split('@')[0];
-    });
+      });
+      
+      ownerBadge.classList.add('hidden');
+    }
   } else {
     btn.textContent = 'Iniciar Sesión';
+    ownerBadge.classList.add('hidden');
   }
 }
 
@@ -828,7 +890,7 @@ function loadObservations() {
     return;
   }
   
-  // Cargar TODAS las observaciones de esta foto
+  // Cargar TODAS las observaciones de esta foto (todos las ven)
   const query = db.collection('observations')
     .where('photoId', '==', currentPhoto.id)
     .orderBy('timestamp', 'desc');
@@ -840,67 +902,77 @@ function loadObservations() {
       noObs.style.display = 'block';
       noObs.textContent = 'No hay observaciones aún';
     } else {
-      // Filtrar observaciones según el usuario
-      const filteredObs = [];
+      noObs.style.display = 'none';
       
+      let html = '';
       snapshot.forEach((doc) => {
         const obs = doc.data();
+        const obsId = doc.id;
         
-        // Si es owner, ver TODAS las observaciones
-        if (isOwner()) {
-          filteredObs.push(obs);
-        } 
-        // Si es usuario normal, ver solo sus observaciones + las del owner
-        else {
-          const isOwnerObs = obs.isOwner || (obs.userEmail && obs.userEmail.toLowerCase() === ownerEmail.toLowerCase());
-          
-          if (isOwnerObs || (obs.userId === currentUser.uid)) {
-            filteredObs.push(obs);
-          }
+        const isOwnerObs = obs.isOwner || (obs.userEmail && obs.userEmail.toLowerCase() === ownerEmail.toLowerCase());
+        const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
+        const userNameDisplay = obs.userName || obs.userEmail?.split('@')[0] || 'Usuario';
+        
+        // Formatear fecha
+        let dateStr = 'Reciente';
+        if (obs.timestamp && obs.timestamp.toDate) {
+          dateStr = obs.timestamp.toDate().toLocaleString('es-ES', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
         }
+        
+        html += `
+          <div class="${obsClass}" id="obs-${obsId}">
+            <div class="user-name">${userNameDisplay}</div>
+            ${isOwnerObs ? '<div class="owner-badge">Owner</div>' : ''}
+            <div>${obs.text}</div>
+            <div class="timestamp">${dateStr}</div>
+            <div class="observation-actions">
+              <button onclick="replyToObservation('${obsId}', '${userNameDisplay}')">Responder</button>
+              ${isOwner() ? `<button class="delete-btn" onclick="deleteObservation('${obsId}')">Borrar</button>` : ''}
+            </div>
+          </div>
+        `;
       });
       
-      if (filteredObs.length === 0) {
-        noObs.style.display = 'block';
-        noObs.textContent = 'No hay observaciones aún';
-      } else {
-        noObs.style.display = 'none';
-        
-        let html = '';
-        filteredObs.forEach((obs) => {
-          const isOwnerObs = obs.isOwner || (obs.userEmail && obs.userEmail.toLowerCase() === ownerEmail.toLowerCase());
-          const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
-          const userNameDisplay = isOwnerObs ? 'NILKON (Fotógrafo)' : (obs.userName || obs.userEmail?.split('@')[0] || 'Usuario');
-          
-          // Formatear fecha
-          let dateStr = 'Reciente';
-          if (obs.timestamp && obs.timestamp.toDate) {
-            dateStr = obs.timestamp.toDate().toLocaleString('es-ES', {
-              day: '2-digit',
-              month: '2-digit',
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-          }
-          
-          html += `
-            <div class="${obsClass}">
-              <div class="user-name">${userNameDisplay}</div>
-              <div>${obs.text}</div>
-              <div class="timestamp">${dateStr}</div>
-            </div>
-          `;
-        });
-        
-        obsList.innerHTML = html;
-      }
+      obsList.innerHTML = html;
     }
   }).catch((error) => {
     console.error("Error cargando observaciones: ", error);
     loading.style.display = 'none';
     obsList.innerHTML = `<div class="text-red-500 text-center py-4">Error: ${error.message}</div>`;
   });
+}
+
+function replyToObservation(obsId, userName) {
+  const textarea = document.getElementById('observationInput');
+  textarea.value = `@${userName} `;
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+}
+
+function deleteObservation(obsId) {
+  if (!isOwner()) {
+    alert('Solo el owner puede borrar observaciones');
+    return;
+  }
+  
+  if (!confirm('¿Estás seguro de que quieres borrar esta observación?')) {
+    return;
+  }
+  
+  db.collection('observations').doc(obsId).delete()
+    .then(() => {
+      alert('Observación borrada correctamente');
+      loadObservations(); // Recargar observaciones
+    })
+    .catch((error) => {
+      alert('Error al borrar la observación: ' + error.message);
+    });
 }
 
 function submitObservation() {
@@ -953,6 +1025,9 @@ function submitObservation() {
       
       submitContainer.parentNode.insertBefore(sentMsg, submitContainer.nextSibling);
       
+      // Recargar observaciones
+      loadObservations();
+      
       setTimeout(() => {
         sentMsg.remove();
       }, 1500);
@@ -976,4 +1051,3 @@ function submitObservation() {
 
 </body>
 </html>
-
