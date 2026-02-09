@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="ca">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
   <!-- SEO BÁSICO -->
-  <title>NILKON | Fotografía & Portafolio</title>
-  <meta name="description" content="NILKON - Fotografía analógica y digital. Portafolio con trabajos en film KODAK GOLD 200 y Nikon d5200.">
-  <meta name="keywords" content="NILKON, fotografia, fotografo, portfolio, fotografias, Minolta x300s, Nikon d5200, KODAK GOLD 200, film, fotografia analogica">
+  <title>NILKON | Fotografia & Portfolio</title>
+  <meta name="description" content="NILKON - Fotografia analògica i digital. Portfolio amb treballs en film KODAK GOLD 200 i Nikon d5200.">
+  <meta name="keywords" content="NILKON, fotografia, fotògraf, portfolio, fotografies, Minolta x300s, Nikon d5200, KODAK GOLD 200, film, fotografia analògica">
   <meta name="author" content="NILKON">
   <meta name="robots" content="index, follow">
   
   <!-- OPEN GRAPH (Redes Sociales) -->
-  <meta property="og:title" content="NILKON | Fotografía & Portafolio">
-  <meta property="og:description" content="NILKON - Fotógrafo profesional especializado en fotografía analógica y digital. Portafolio con trabajos en film KODAK GOLD 200 y Nikon d5200.">
+  <meta property="og:title" content="NILKON | Fotografia & Portfolio">
+  <meta property="og:description" content="NILKON - Fotògraf professional especialitzat en fotografia analògica i digital. Portfolio amb treballs en film KODAK GOLD 200 i Nikon d5200.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://nullweb.es">
   <meta property="og:image" content="https://nullweb.es/WhatsApp Image 2026-01-24 at 20.44.35.jpeg">
@@ -21,8 +21,8 @@
   
   <!-- TWITTER CARD -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="NILKON | Fotografía & Portafolio">
-  <meta name="twitter:description" content="NILKON - Fotógrafo profesional especializado en fotografía analógica y digital.">
+  <meta name="twitter:title" content="NILKON | Fotografia & Portfolio">
+  <meta name="twitter:description" content="NILKON - Fotògraf professional especialitzat en fotografia analògica i digital.">
   <meta name="twitter:image" content="https://nullweb.es/WhatsApp Image 2026-01-24 at 20.44.35.jpeg">
   
   <!-- CANONICAL URL -->
@@ -38,7 +38,7 @@
     "@type": "Photographer",
     "name": "NILKON",
     "url": "https://nullweb.es",
-    "description": "Fotografía analógica y digital",
+    "description": "Fotografia analògica i digital",
     "image": "https://nullweb.es/WhatsApp Image 2026-01-24 at 20.44.35.jpeg",
     "sameAs": [
       "https://www.instagram.com/niilrp/"
@@ -57,258 +57,600 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <style>
+    /* Interactive Media Design - Estilo Moderno y Experimental */
+    
+    :root {
+      --primary: #00f0ff;
+      --secondary: #ff00e5;
+      --accent: #7b00ff;
+      --dark: #0a0a0a;
+      --light: #f8f8f8;
+      --gradient-primary: linear-gradient(135deg, #00f0ff 0%, #7b00ff 100%);
+      --gradient-secondary: linear-gradient(135deg, #ff00e5 0%, #7b00ff 100%);
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
     body {
-      background-color: #f5f5f7;
-      opacity: 0;
-      animation: fadeIn 0.8s ease forwards;
+      background: var(--dark);
+      color: var(--light);
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      overflow-x: hidden;
+      position: relative;
     }
-
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 50%, rgba(0, 240, 255, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+    
+    /* Animaciones */
     @keyframes fadeIn {
-      to { opacity: 1; }
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-
-    .photo-card {
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
-
-    .photo-card:hover {
-      transform: scale(1.02);
-      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
-
-    .modal-content {
-      transform: scale(0.9) translateY(20px);
-      opacity: 0;
+    
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-50px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 1.5rem 0;
+      border-bottom: 1px solid rgba(0, 240, 255, 0.1);
+    }
+    
+    header .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+    
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 1px;
+    }
+    
+    header button {
+      background: var(--gradient-primary);
+      border: none;
+      padding: 0.8rem 2rem;
+      border-radius: 50px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 240, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    header button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    header button:hover::before {
+      left: 100%;
+    }
+    
+    header button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(0, 240, 255, 0.5);
+    }
+    
+    header button:active {
+      transform: translateY(0);
+    }
+    
+    /* Hero Section */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%);
+      animation: rotate 20s linear infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .hero-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+    
+    .hero-text {
+      animation: fadeIn 1s ease-out;
+    }
+    
+    .hero-text h1 {
+      font-size: 5rem;
+      font-weight: 900;
+      line-height: 1;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: -0.05em;
+      background: linear-gradient(90deg, #00f0ff, #7b00ff, #ff00e5);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .hero-text p {
+      font-size: 1.5rem;
+      color: #aaa;
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+    
+    .hero-image {
+      position: relative;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    .hero-image img {
+      width: 400px;
+      height: 400px;
+      object-fit: cover;
+      border-radius: 20px;
+      border: 3px solid var(--primary);
+      box-shadow: 0 20px 60px rgba(0, 240, 255, 0.3);
       transition: all 0.3s ease;
     }
-
-    .modal-show .modal-content {
-      transform: scale(1) translateY(0);
+    
+    .hero-image img:hover {
+      transform: scale(1.05);
+      box-shadow: 0 30px 80px rgba(0, 240, 255, 0.5);
+    }
+    
+    /* Gallery Section */
+    .gallery-section {
+      padding: 6rem 2rem;
+      background: linear-gradient(to bottom, var(--dark) 0%, rgba(10, 10, 10, 0.9) 100%);
+    }
+    
+    .gallery-section h2 {
+      font-size: 3.5rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 4rem;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+    }
+    
+    .gallery {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 2rem;
+    }
+    
+    .photo-card {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    
+    .photo-card:hover {
+      transform: scale(1.05) translateY(-10px);
+      box-shadow: 0 20px 50px rgba(0, 240, 255, 0.3);
+    }
+    
+    .photo-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.8) 100%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .photo-card:hover::before {
       opacity: 1;
     }
-
+    
+    .photo-card img {
+      width: 100%;
+      height: 400px;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+    
+    .photo-card:hover img {
+      transform: scale(1.1);
+    }
+    
+    .photo-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 2rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.4s ease;
+    }
+    
+    .photo-card:hover .photo-overlay {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .photo-overlay h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: white;
+    }
+    
+    .photo-overlay p {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 0.9rem;
+    }
+    
     /* Login Modal */
     .login-modal {
-      background: white;
-      border-radius: 20px;
-      max-width: 400px;
+      background: rgba(20, 20, 20, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 30px;
+      max-width: 450px;
       width: 90%;
-      padding: 2rem;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      padding: 3rem;
+      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 240, 255, 0.2);
+      position: relative;
+      overflow: hidden;
     }
-
+    
+    .login-modal::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(0, 240, 255, 0.1) 0%, transparent 70%);
+      animation: rotate 30s linear infinite;
+      pointer-events: none;
+    }
+    
+    .login-modal h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
     .auth-input {
       width: 100%;
-      padding: 12px 16px;
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      margin-bottom: 16px;
-      font-size: 16px;
-      transition: border-color 0.3s;
+      padding: 1rem 1.5rem;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      margin-bottom: 1.5rem;
+      font-size: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      transition: all 0.3s ease;
     }
-
+    
     .auth-input:focus {
       outline: none;
-      border-color: #007AFF;
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
     }
-
+    
+    .auth-input::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+    
     .auth-btn {
       width: 100%;
-      padding: 14px;
+      padding: 1.2rem;
       border: none;
-      border-radius: 12px;
-      font-size: 16px;
-      font-weight: 600;
+      border-radius: 15px;
+      font-size: 1rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .login-btn {
-      background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);
+      transition: all 0.3s ease;
+      background: var(--gradient-primary);
       color: white;
+      box-shadow: 0 5px 20px rgba(0, 240, 255, 0.3);
+      position: relative;
+      overflow: hidden;
     }
-
-    .login-btn:hover {
+    
+    .auth-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    .auth-btn:hover::before {
+      left: 100%;
+    }
+    
+    .auth-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(0, 122, 255, 0.3);
+      box-shadow: 0 10px 30px rgba(0, 240, 255, 0.5);
     }
-
-    .forgot-btn {
-      background: #f0f0f0;
-      color: #666;
+    
+    .auth-btn:active {
+      transform: translateY(0);
     }
-
-    .forgot-btn:hover {
-      background: #e0e0e0;
-    }
-
+    
     .register-link {
-      color: #007AFF;
-      text-decoration: underline;
-      cursor: pointer;
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
     }
-
-    /* Observaciones privadas */
+    
+    .register-link:hover {
+      text-shadow: 0 0 10px var(--primary);
+    }
+    
+    /* Observations - Estilo Interactive Media */
     .observations-section {
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid #e0e0e0;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
-
+    
     .observations-section h4 {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 8px;
+      font-size: 1.2rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-weight: 700;
+      letter-spacing: 1px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
-
-    .user-observation {
-      background: #f0f7ff;
-      border-left: 3px solid #007AFF;
-      padding: 10px 12px;
-      border-radius: 0 8px 8px 0;
-      margin-bottom: 8px;
-      font-size: 13px;
+    
+    .user-observation, .owner-observation {
+      background: rgba(30, 30, 30, 0.8);
+      border-radius: 15px;
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
-
-    .user-observation .user-name {
-      font-weight: 600;
-      color: #007AFF;
-      font-size: 12px;
-      margin-bottom: 2px;
+    
+    .user-observation::before, .owner-observation::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background: var(--primary);
     }
-
-    .user-observation .timestamp {
-      color: #999;
-      font-size: 11px;
-      margin-top: 2px;
+    
+    .owner-observation::before {
+      background: var(--secondary);
     }
-
-    .owner-observation {
-      background: #fff3cd;
-      border-left: 3px solid #ffc107;
-      padding: 10px 12px;
-      border-radius: 0 8px 8px 0;
-      margin-bottom: 8px;
-      font-size: 13px;
+    
+    .user-observation:hover, .owner-observation:hover {
+      transform: translateX(5px);
+      border-color: rgba(0, 240, 255, 0.2);
+      box-shadow: 0 5px 20px rgba(0, 240, 255, 0.1);
     }
-
-    .owner-observation .user-name {
-      font-weight: 600;
-      color: #007AFF;
-      font-size: 12px;
-      margin-bottom: 2px;
+    
+    .user-observation .user-name, .owner-observation .user-name {
+      font-weight: 700;
+      color: white;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-
+    
+    .user-observation .timestamp, .owner-observation .timestamp {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    
     .owner-badge {
-      display: inline-block;
-      background: #ffc107;
-      color: #856404;
-      font-size: 10px;
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-top: 2px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--secondary);
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
-
+    
     .empty-observations {
-      color: #999;
+      color: rgba(255, 255, 255, 0.4);
       font-style: italic;
       text-align: center;
-      padding: 12px;
+      padding: 1.5rem;
+      font-size: 1rem;
     }
-
+    
     .submit-observation {
       display: flex;
-      gap: 8px;
-      margin-top: 12px;
+      gap: 1rem;
+      margin-top: 1.5rem;
     }
-
+    
     .submit-observation textarea {
       flex: 1;
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      padding: 10px;
-      font-size: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 15px;
+      padding: 1rem 1.5rem;
+      font-size: 1rem;
       resize: vertical;
-      min-height: 60px;
+      min-height: 80px;
+      background: rgba(30, 30, 30, 0.8);
+      color: white;
+      transition: all 0.3s ease;
     }
-
+    
+    .submit-observation textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+    }
+    
+    .submit-observation textarea::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+    
     .submit-observation button {
-      background: #007AFF;
+      background: var(--gradient-primary);
       color: white;
       border: none;
-      border-radius: 12px;
-      padding: 0 16px;
-      font-weight: 600;
+      border-radius: 15px;
+      padding: 0 1.5rem;
+      font-weight: 700;
+      font-size: 1rem;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.3s ease;
+      min-width: 100px;
+      box-shadow: 0 5px 20px rgba(0, 240, 255, 0.3);
     }
-
+    
     .submit-observation button:hover {
-      background: #0051D5;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(0, 240, 255, 0.5);
     }
-
-    .observation-sent {
-      color: #00C853;
-      font-size: 13px;
-      margin-top: 8px;
-      text-align: right;
-      display: none;
-    }
-
-    .new-observation-badge {
-      background: #00C853;
-      color: white;
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 10px;
-      margin-left: 6px;
-    }
-
+    
     /* Botones de acción */
     .observation-actions {
       display: flex;
-      gap: 8px;
-      margin-top: 4px;
-      font-size: 11px;
+      gap: 1rem;
+      margin-top: 1rem;
+      font-size: 0.9rem;
     }
-
+    
     .observation-actions button {
       background: none;
       border: none;
       cursor: pointer;
-      color: #007AFF;
-      font-size: 11px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      transition: all 0.2s;
+      color: var(--primary);
+      font-size: 0.9rem;
+      padding: 0.5rem 1rem;
+      border-radius: 10px;
+      transition: all 0.2s ease;
+      font-weight: 600;
+      border: 1px solid rgba(0, 240, 255, 0.2);
     }
-
+    
     .observation-actions button:hover {
-      background: #e3f2fd;
+      background: rgba(0, 240, 255, 0.1);
+      border-color: var(--primary);
+      transform: translateY(-1px);
     }
-
+    
     .observation-actions .delete-btn {
-      color: #dc3545;
+      color: #ff3b30;
+      border-color: rgba(255, 59, 48, 0.2);
     }
-
+    
     .observation-actions .delete-btn:hover {
-      background: #ffebee;
+      background: rgba(255, 59, 48, 0.1);
+      border-color: #ff3b30;
     }
-
+    
     /* Loading Spinner */
     .spinner {
-      border: 3px solid #f3f3f3;
-      border-top: 3px solid #007AFF;
+      border: 3px solid rgba(0, 240, 255, 0.2);
+      border-top: 3px solid var(--primary);
       border-radius: 50%;
-      width: 30px;
-      height: 30px;
+      width: 40px;
+      height: 40px;
       animation: spin 1s linear infinite;
-      margin: 20px auto;
+      margin: 2rem auto;
     }
-
+    
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -316,122 +658,302 @@
     
     /* Owner badge en header */
     .owner-badge-header {
-      background: #dc3545;
+      background: var(--secondary);
       color: white;
-      font-size: 12px;
-      font-weight: bold;
-      padding: 4px 10px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 0.4rem 1rem;
       border-radius: 20px;
-      margin-left: 8px;
+      margin-left: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 3px 15px rgba(255, 0, 229, 0.3);
+    }
+    
+    /* Instagram Button */
+    .instagram-section {
+      padding: 6rem 2rem;
+      text-align: center;
+      background: linear-gradient(to bottom, rgba(10, 10, 10, 0.9) 0%, var(--dark) 100%);
+    }
+    
+    .instagram-section h2 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 3rem;
+      background: var(--gradient-secondary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: 2px;
+    }
+    
+    .instagram-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--gradient-secondary);
+      color: white;
+      padding: 1rem 2.5rem;
+      border-radius: 50px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 40px rgba(255, 0, 229, 0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .instagram-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+    
+    .instagram-button:hover::before {
+      left: 100%;
+    }
+    
+    .instagram-button:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 15px 50px rgba(255, 0, 229, 0.5);
+    }
+    
+    .instagram-button:active {
+      transform: translateY(0) scale(1);
+    }
+    
+    /* Footer */
+    footer {
+      background: rgba(5, 5, 5, 0.95);
+      padding: 3rem 2rem;
+      text-align: center;
+      border-top: 1px solid rgba(0, 240, 255, 0.1);
+    }
+    
+    footer p {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.9rem;
+    }
+    
+    /* Modal de Foto */
+    .modal-content {
+      background: rgba(20, 20, 20, 0.98);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      border-radius: 30px;
+      max-width: 1000px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 30px 100px rgba(0, 0, 0, 0.9), 0 0 50px rgba(0, 240, 255, 0.2);
+    }
+    
+    .modal-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: var(--gradient-primary);
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 1.5rem;
+      right: 1.5rem;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 2rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-close:hover {
+      color: var(--primary);
+      transform: rotate(90deg);
+    }
+    
+    .modal-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      padding: 3rem;
+    }
+    
+    .modal-image-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .modal-image-container img {
+      max-width: 100%;
+      max-height: 60vh;
+      object-fit: contain;
+      border-radius: 20px;
+      border: 2px solid var(--primary);
+      box-shadow: 0 20px 60px rgba(0, 240, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+    
+    .modal-image-container img:hover {
+      transform: scale(1.02);
+      box-shadow: 0 30px 80px rgba(0, 240, 255, 0.3);
+    }
+    
+    .modal-info h3 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      color: white;
+    }
+    
+    .modal-info p {
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .hero-content {
+        grid-template-columns: 1fr;
+        text-align: center;
+      }
+      
+      .hero-text h1 {
+        font-size: 3.5rem;
+      }
+      
+      .hero-image {
+        justify-content: center;
+      }
+      
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+      
+      .modal-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      
+      header h1 {
+        font-size: 1.5rem;
+      }
     }
   </style>
 </head>
 
-<body class="text-gray-900">
+<body>
 
 <!-- Login/Registro Modal -->
-<div id="authModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
+<div id="authModal" class="fixed inset-0 bg-black/80 hidden items-center justify-center z-50 p-4">
   <div class="login-modal">
     <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-semibold" id="authTitle">Iniciar Sesión</h2>
-      <button onclick="closeAuthModal()" class="text-2xl text-gray-500 hover:text-gray-700">&times;</button>
+      <h2 id="authTitle">Iniciar Sessió</h2>
+      <button onclick="closeAuthModal()" class="text-2xl text-gray-400 hover:text-white transition">&times;</button>
     </div>
     
     <form id="authForm" onsubmit="handleAuth(event)">
       <div class="mb-4">
-        <label class="block text-sm font-medium mb-2">Email</label>
-        <input type="email" id="email" class="auth-input" required placeholder="tu@email.com">
+        <input type="email" id="email" class="auth-input" required placeholder="elteu@email.com">
       </div>
       
       <div class="mb-4" id="passwordField">
-        <label class="block text-sm font-medium mb-2">Contraseña</label>
         <input type="password" id="password" class="auth-input" required placeholder="••••••••">
       </div>
       
       <div class="mb-4 hidden" id="nameField">
-        <label class="block text-sm font-medium mb-2">Nombre</label>
-        <input type="text" id="name" class="auth-input" placeholder="Tu nombre">
+        <input type="text" id="name" class="auth-input" placeholder="El teu nom">
       </div>
       
-      <button type="submit" class="auth-btn login-btn mb-3" id="submitBtn">
-        <span id="submitBtnText">Iniciar Sesión</span>
-        <span id="submitSpinner" class="spinner" style="display:none;width:20px;height:20px;margin:0 auto;"></span>
+      <button type="submit" class="auth-btn mb-3" id="submitBtn">
+        <span id="submitBtnText">Iniciar Sessió</span>
+        <span id="submitSpinner" class="spinner" style="display:none;width:25px;height:25px;margin:0 auto;"></span>
       </button>
       
-      <div class="text-center">
-        <span class="text-sm text-gray-600">¿Olvidaste tu contraseña? </span>
-        <button type="button" onclick="toggleForgotPassword()" class="text-sm text-blue-600 hover:underline">Recuperar</button>
+      <div class="text-center mt-4">
+        <span class="text-sm text-gray-400">¿Has oblidat la contrasenya? </span>
+        <button type="button" onclick="toggleForgotPassword()" class="text-sm register-link">Recuperar</button>
         <span class="block mt-2">
-          <span class="text-sm text-gray-600">¿No tienes cuenta? </span>
-          <button type="button" onclick="toggleRegister()" class="register-link">Registrarse</button>
+          <span class="text-sm text-gray-400">¿No tens compte? </span>
+          <button type="button" onclick="toggleRegister()" class="register-link">Registrar-se</button>
         </span>
       </div>
     </form>
     
     <div id="forgotPasswordSection" class="hidden">
-      <p class="text-sm text-gray-600 mb-4">Ingresa tu email y te enviaremos instrucciones para recuperar tu contraseña.</p>
-      <input type="email" id="forgotEmail" class="auth-input" placeholder="tu@email.com">
-      <button onclick="handlePasswordRecovery()" class="auth-btn login-btn mb-3">Enviar Instrucciones</button>
-      <button onclick="toggleForgotPassword()" class="auth-btn forgot-btn">Volver</button>
+      <p class="text-sm text-gray-400 mb-4">Introdueix el teu correu electrònic i t'enviarem instruccions per recuperar la teva contrasenya.</p>
+      <input type="email" id="forgotEmail" class="auth-input" placeholder="elteu@email.com">
+      <button onclick="handlePasswordRecovery()" class="auth-btn mb-3">Enviar Instruccions</button>
+      <button onclick="toggleForgotPassword()" class="auth-btn" style="background:rgba(255,255,255,0.1);color:white;">Tornar</button>
     </div>
   </div>
 </div>
 
-<!-- Header con Login -->
-<header class="max-w-6xl mx-auto px-6 py-6 flex justify-between items-center">
-  <div class="text-2xl font-bold">NILKON</div>
-  <button onclick="handleAuthButtonClick()" class="bg-black text-white px-6 py-2 rounded-full hover:bg-gray-800 transition">
-    <span id="loginButtonText">Iniciar Sesión</span>
-    <span id="ownerBadgeHeader" class="owner-badge-header hidden">owner version</span>
-  </button>
+<!-- Header -->
+<header>
+  <div class="container">
+    <h1>NILKON</h1>
+    <button onclick="handleAuthButtonClick()">
+      <span id="loginButtonText">Iniciar Sessió</span>
+      <span id="ownerBadgeHeader" class="owner-badge-header hidden">owner version</span>
+    </button>
+  </div>
 </header>
 
-<!-- Presentación -->
-<section class="max-w-6xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
-  <div>
-    <h1 class="text-5xl font-semibold mb-6">
-      Hola, soc <span class="text-gray-500">[NIL]</span>
-    </h1>
-    <p class="text-xl text-gray-600 leading-relaxed">
-      Apassionat en<strong>[Fotografia]</strong>.
-    </p>
-  </div>
-
-  <div class="flex justify-center">
-    <img src="WhatsApp Image 2026-01-24 at 20.44.35.jpeg" alt="Foto de perfil" class="w-72 h-72 object-cover rounded-xl shadow-lg" />
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="hero-text">
+      <h1>Hola, soc <span style="color:#7b00ff">[NIL]</span></h1>
+      <p>Apassionat de <strong style="color:#00f0ff">[Fotografia]</strong></p>
+    </div>
+    <div class="hero-image">
+      <img src="WhatsApp Image 2026-01-24 at 20.44.35.jpeg" alt="Foto de perfil">
+    </div>
   </div>
 </section>
 
-<!-- Título Fotos -->
-<section class="max-w-6xl mx-auto px-6">
-  <h2 class="text-4xl font-semibold mb-12">Fotos</h2>
-</section>
-
-<!-- Galería (se genera automáticamente) -->
-<section id="gallery" class="max-w-6xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-10 pb-24">
-  <!-- Las fotos se insertarán aquí con JavaScript -->
+<!-- Gallery Section -->
+<section class="gallery-section">
+  <h2>Fotos</h2>
+  <div id="gallery" class="gallery">
+    <!-- Las fotos se insertarán aquí con JavaScript -->
+  </div>
 </section>
 
 <!-- Modal de Foto -->
-<div id="modal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50 p-4">
-  <div class="modal-content bg-white rounded-3xl max-w-4xl w-full mx-auto p-6 relative">
-    <button onclick="closeModal()" class="absolute top-4 right-6 text-2xl text-gray-500">&times;</button>
+<div id="modal" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-50 p-4">
+  <div class="modal-content">
+    <button onclick="closeModal()" class="modal-close">&times;</button>
    
-    <div class="grid md:grid-cols-2 gap-6 items-start">
-      <div class="flex justify-center">
-        <img id="modalImage" class="max-h-[70vh] w-auto object-contain rounded-xl" src="" alt="Foto ampliada" />
+    <div class="modal-grid">
+      <div class="modal-image-container">
+        <img id="modalImage" src="" alt="Foto ampliada">
       </div>
 
-      <div>
-        <h3 id="modalTitle" class="text-2xl font-semibold mb-4">Título</h3>
-        <p id="modalCamera" class="text-gray-700 mb-2"></p>
-        <p id="modalSettings" class="text-gray-700 mb-4"></p>
+      <div class="modal-info">
+        <h3 id="modalTitle">Títol</h3>
+        <p id="modalCamera"></p>
+        <p id="modalSettings"></p>
         
-        <!-- Observaciones privadas -->
+        <!-- Observaciones -->
         <div id="observationsSection" class="observations-section">
           <h4>
-            Observaciones
-            <span id="newBadge" class="new-observation-badge" style="display:none;">Nuevo</span>
+            Observacions
+            <span id="newBadge" style="background:#00f0ff;color:white;font-size:0.7rem;padding:0.2rem 0.6rem;border-radius:10px;margin-left:0.5rem;display:none;">Nou</span>
           </h4>
           
           <!-- Loading -->
@@ -439,14 +961,14 @@
           
           <!-- Lista de observaciones -->
           <div id="observationsList"></div>
-          <div id="noObservations" class="empty-observations" style="display:none;">No hay observaciones aún</div>
+          <div id="noObservations" class="empty-observations" style="display:none;">No hi ha observacions encara</div>
           
-          <!-- Formulario para enviar observación -->
+          <!-- Formulario -->
           <div class="submit-observation">
-            <textarea id="observationInput" placeholder="Escribe tu observación sobre esta foto..."></textarea>
+            <textarea id="observationInput" placeholder="Escriu la teva observació sobre aquesta foto..."></textarea>
             <button type="button" onclick="submitObservation()">
               <span id="submitObsText">Enviar</span>
-              <span id="obsSpinner" class="spinner" style="display:none;width:15px;height:15px;"></span>
+              <span id="obsSpinner" class="spinner" style="display:none;width:18px;height:18px;"></span>
             </button>
           </div>
         </div>
@@ -455,39 +977,27 @@
   </div>
 </div>
 
-<!-- CONTACTO: Botón de Instagram -->
-<section class="bg-white py-12">
-  <div class="max-w-4xl mx-auto px-6 text-center">
-    <h2 class="text-3xl font-semibold mb-6">segueix-me :></h2>
-    
-    <!-- Botón de Instagram (sin color morado) -->
-    <a 
-      href="https://www.instagram.com/niilrp/" 
-      target="_blank" 
-      rel="noopener noreferrer"
-      class="inline-flex items-center justify-center gap-3 bg-black hover:bg-gray-800 text-white font-medium py-3 px-8 rounded-full shadow-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-50"
-    >
-      <!-- SVG del logo de Instagram -->
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-      </svg>
-      @niilrp
-    </a>
-  </div>
+<!-- Instagram Section -->
+<section class="instagram-section">
+  <h2>segueix-me :></h2>
+  <a href="https://www.instagram.com/niilrp/" target="_blank" rel="noopener noreferrer" class="instagram-button">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+    </svg>
+    @niilrp
+  </a>
 </section>
 
-<!-- Footer con Copyright estilo Apple -->
-<footer class="bg-white py-8">
-  <div class="max-w-6xl mx-auto px-6 text-center text-sm text-gray-600">
-    <p>© 2026 NILKON. Todos los derechos reservados.</p>
-  </div>
+<!-- Footer -->
+<footer>
+  <p>© 2026 NILKON. Tots els drets reservats.</p>
 </footer>
 
 <script>
 // ============================================
-// CONFIGURACIÓN DE FIREBASE - ¡YA CONFIGURADO!
+// CONFIGURACIÓN DE FIREBASE
 // ============================================
 const firebaseConfig = {
   apiKey: "AIzaSyAhRpgmSwld3pwHNzZPMLa1edwvmeyOTi8",
@@ -507,7 +1017,7 @@ const db = firebase.firestore();
 // VARIABLES GLOBALES
 // ============================================
 let currentUser = null;
-const ownerEmail = 'nruiz4445@institutelpalau.com'; // ⚠️ TU EMAIL REAL
+const ownerEmail = 'nilepeque@gmail.com';
 let currentPhoto = null;
 let observationsUnsubscribe = null;
 
@@ -537,9 +1047,9 @@ function closeAuthModal() {
 
 function resetAuthForm() {
   document.getElementById('authForm').reset();
-  document.getElementById('authTitle').textContent = 'Iniciar Sesión';
-  document.getElementById('submitBtnText').textContent = 'Iniciar Sesión';
-  document.getElementById('submitBtn').className = 'auth-btn login-btn mb-3';
+  document.getElementById('authTitle').textContent = 'Iniciar Sessió';
+  document.getElementById('submitBtnText').textContent = 'Iniciar Sessió';
+  document.getElementById('submitBtn').className = 'auth-btn mb-3';
   document.getElementById('nameField').classList.add('hidden');
   document.getElementById('forgotPasswordSection').classList.add('hidden');
   document.getElementById('passwordField').classList.remove('hidden');
@@ -550,9 +1060,9 @@ function toggleRegister() {
   const isRegistering = document.getElementById('nameField').classList.contains('hidden');
   
   if (isRegistering) {
-    document.getElementById('authTitle').textContent = 'Crear Cuenta';
-    document.getElementById('submitBtnText').textContent = 'Registrarse';
-    document.getElementById('submitBtn').className = 'auth-btn login-btn mb-3';
+    document.getElementById('authTitle').textContent = 'Crear Compte';
+    document.getElementById('submitBtnText').textContent = 'Registrar-se';
+    document.getElementById('submitBtn').className = 'auth-btn mb-3';
     document.getElementById('nameField').classList.remove('hidden');
   } else {
     resetAuthForm();
@@ -592,13 +1102,11 @@ function handleAuth(event) {
   const name = document.getElementById('name').value;
   const isRegistering = document.getElementById('nameField').classList.contains('hidden') === false;
   
-  showLoading('submitBtn', 'submitSpinner', 'submitBtnText', isRegistering ? 'Registrando...' : 'Iniciando...');
+  showLoading('submitBtn', 'submitSpinner', 'submitBtnText', isRegistering ? 'Registrant...' : 'Iniciant...');
   
   if (isRegistering) {
-    // Registro con Firebase
     auth.createUserWithEmailAndPassword(email, password)
       .then((userCredential) => {
-        // Guardar datos adicionales del usuario
         return db.collection('users').doc(userCredential.user.uid).set({
           name: name || email.split('@')[0],
           email: email,
@@ -607,27 +1115,26 @@ function handleAuth(event) {
         });
       })
       .then(() => {
-        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Registrarse');
-        alert('¡Registro exitoso! Bienvenido a NILKON');
+        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Registrar-se');
+        alert('¡Registre exitós! Benvingut a NILKON');
         closeAuthModal();
       })
       .catch((error) => {
-        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Registrarse');
+        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Registrar-se');
         alert('Error: ' + error.message);
       });
   } else {
-    // Login con Firebase
     auth.signInWithEmailAndPassword(email, password)
       .then((userCredential) => {
-        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Iniciar Sesión');
+        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Iniciar Sessió');
         currentUser = userCredential.user;
-        alert('¡Bienvenido de nuevo!');
+        alert('¡Benvingut de nou!');
         updateLoginButton();
         closeAuthModal();
       })
       .catch((error) => {
-        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Iniciar Sesión');
-        alert('Email o contraseña incorrectos');
+        hideLoading('submitBtn', 'submitSpinner', 'submitBtnText', 'Iniciar Sessió');
+        alert('Correu electrònic o contrasenya incorrectes');
       });
   }
 }
@@ -636,13 +1143,13 @@ function handlePasswordRecovery() {
   const email = document.getElementById('forgotEmail').value;
   
   if (!email) {
-    alert('Por favor ingresa tu email');
+    alert('Si us plau introdueix el teu correu electrònic');
     return;
   }
   
   auth.sendPasswordResetEmail(email)
     .then(() => {
-      alert(`Se han enviado instrucciones de recuperación a ${email}`);
+      alert(`S'han enviat instruccions de recuperació a ${email}`);
       toggleForgotPassword();
     })
     .catch((error) => {
@@ -654,9 +1161,9 @@ function logout() {
   auth.signOut().then(() => {
     currentUser = null;
     updateLoginButton();
-    alert('Sesión cerrada correctamente');
+    alert('Sessió tancada correctament');
   }).catch((error) => {
-    alert('Error al cerrar sesión: ' + error.message);
+    alert('Error en tancar la sessió: ' + error.message);
   });
 }
 
@@ -665,12 +1172,10 @@ function updateLoginButton() {
   const ownerBadge = document.getElementById('ownerBadgeHeader');
   
   if (currentUser) {
-    // Verificar si es owner
     if (currentUser.email.toLowerCase() === ownerEmail.toLowerCase()) {
       btn.textContent = 'NILKON';
       ownerBadge.classList.remove('hidden');
     } else {
-      // Obtener nombre del usuario desde Firestore
       db.collection('users').doc(currentUser.uid).get().then((doc) => {
         if (doc.exists) {
           btn.textContent = doc.data().name;
@@ -684,7 +1189,7 @@ function updateLoginButton() {
       ownerBadge.classList.add('hidden');
     }
   } else {
-    btn.textContent = 'Iniciar Sesión';
+    btn.textContent = 'Iniciar Sessió';
     ownerBadge.classList.add('hidden');
   }
 }
@@ -701,11 +1206,9 @@ auth.onAuthStateChanged((user) => {
   updateLoginButton();
   
   if (user) {
-    // Cargar datos del usuario
     db.collection('users').doc(user.uid).get().then((doc) => {
       if (doc.exists) {
         const userData = doc.data();
-        // Puedes usar userData.name, userData.isOwner, etc.
       }
     });
   }
@@ -718,99 +1221,99 @@ const photos = [
   {
     id: 1,
     src: "loup.jpeg",
-    title: "Ajustes",
-    camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f5.6, 1/800s, ISO 800, 127mm"
+    title: "Ajustos",
+    camera: "Càmera: Nikon d5200",
+    settings: "Configuració: f5.6, 1/800s, ISO 800, 127mm"
   },
   {
     id: 2,
     src: "R1-05855-0034.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
+    title: "Ajustos",
+    camera: "Càmera: Minolta x300s",
     settings: "Film: KODAK GOLD 200"
   },
   {
     id: 3,
     src: "R1-05855-0027.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
+    title: "Ajustos",
+    camera: "Càmera: Minolta x300s",
     settings: "Film: KODAK GOLD 200"
   },
   {
     id: 4,
     src: "DSC_0045.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f/5.6, 1/320s, ISO 640, 72mm"
+    title: "Ajustos",
+    camera: "Càmera: Nikon d5200",
+    settings: "Configuració: f/5.6, 1/320s, ISO 640, 72mm"
   },
   {
     id: 5,
     src: "IMG_5959.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
+    title: "Ajustos",
+    camera: "Càmera: Minolta x300s",
     settings: "Film: KODAK GOLD 200"
   },
   {
     id: 6,
     src: "R1-05848-0018.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
+    title: "Ajustos",
+    camera: "Càmera: Minolta x300s",
     settings: "Film: KODAK GOLD 200"
   },
   {
     id: 7,
     src: "IMG_5976.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
+    title: "Ajustos",
+    camera: "Càmera: Minolta x300s",
     settings: "Film: KODAK GOLD 200"
   },
   {
     id: 8,
     src: "DSC_0098.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f5.6, 1/500s, ISO 1600, 31mm"
+    title: "Ajustos",
+    camera: "Càmera: Nikon d5200",
+    settings: "Configuració: f5.6, 1/500s, ISO 1600, 31mm"
   },
   {
     id: 9,
     src: "DSC_0118.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f5.6, 1/800, ISO 800, 157mm"
+    title: "Ajustos",
+    camera: "Càmera: Nikon d5200",
+    settings: "Configuració: f5.6, 1/800, ISO 800, 157mm"
   },
   {
     id: 10,
     src: "IMG_5969.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
+    title: "Ajustos",
+    camera: "Càmera: Minolta x300s",
     settings: "Film: KODAK GOLD 200"
   },
   {
     id: 11,
     src: "DSC_0189.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f5.6, 1/1250s, ISO 100, 135mm"
+    title: "Ajustos",
+    camera: "Càmera: Nikon d5200",
+    settings: "Configuració: f5.6, 1/1250s, ISO 100, 135mm"
   },
   {
     id: 12,
     src: "R1-05848-0004.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
+    title: "Ajustos",
+    camera: "Càmera: Minolta x300s",
     settings: "Film: KODAK GOLD 200"
   },
   {
     id: 13,
     src: "WhatsApp.jpeg",
-    title: "Ajustes",
-    camera: "Cámara: Nikon d5200",
-    settings: "Configuración: f5.6, 1/800, ISO 800, 48mm"
+    title: "Ajustos",
+    camera: "Càmera: Nikon d5200",
+    settings: "Configuració: f5.6, 1/800, ISO 800, 48mm"
   },
   {
     id: 14,
     src: "IMG_5964.JPG",
-    title: "Ajustes",
-    camera: "Cámara: Minolta x300s",
+    title: "Ajustos",
+    camera: "Càmera: Minolta x300s",
     settings: "Film: KODAK GOLD 200"
   }
 ];
@@ -819,9 +1322,13 @@ const photos = [
 const gallery = document.getElementById('gallery');
 photos.forEach(photo => {
   const card = document.createElement('div');
-  card.className = 'photo-card bg-white rounded-3xl overflow-hidden cursor-pointer';
+  card.className = 'photo-card';
   card.innerHTML = `
-    <img src="${photo.src}" alt="${photo.title}" class="w-full h-80 object-cover" />
+    <img src="${photo.src}" alt="${photo.title}">
+    <div class="photo-overlay">
+      <h3>${photo.title}</h3>
+      <p>${photo.camera}</p>
+    </div>
   `;
   card.onclick = () => openModal(photo);
   gallery.appendChild(card);
@@ -839,29 +1346,22 @@ function openModal(photo) {
   document.getElementById('modalSettings').innerText = photo.settings;
   document.getElementById('modalImage').src = photo.src;
   
-  // Cargar observaciones
   loadObservations();
   
   const modal = document.getElementById('modal');
   modal.classList.remove('hidden');
   modal.classList.add('flex');
-  setTimeout(() => modal.classList.add('modal-show'), 10);
 }
 
 function closeModal() {
   const modal = document.getElementById('modal');
-  modal.classList.remove('modal-show');
+  modal.classList.remove('flex');
+  modal.classList.add('hidden');
   
-  // Desuscribirse del listener de observaciones
   if (observationsUnsubscribe) {
     observationsUnsubscribe();
     observationsUnsubscribe = null;
   }
-  
-  setTimeout(() => {
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-  }, 300);
 }
 
 function loadObservations() {
@@ -871,26 +1371,22 @@ function loadObservations() {
   const noObs = document.getElementById('noObservations');
   const loading = document.getElementById('observationsLoading');
   
-  // Mostrar loading
   loading.style.display = 'block';
   obsList.innerHTML = '';
   noObs.style.display = 'none';
   
-  // Desuscribirse del listener anterior si existe
   if (observationsUnsubscribe) {
     observationsUnsubscribe();
     observationsUnsubscribe = null;
   }
   
-  // Si no hay usuario autenticado
   if (!currentUser) {
     loading.style.display = 'none';
     noObs.style.display = 'block';
-    noObs.textContent = 'Inicia sesión para ver observaciones';
+    noObs.textContent = 'Inicia sessió per veure observacions';
     return;
   }
   
-  // Cargar TODAS las observaciones de esta foto (todos las ven)
   const query = db.collection('observations')
     .where('photoId', '==', currentPhoto.id)
     .orderBy('timestamp', 'desc');
@@ -900,7 +1396,7 @@ function loadObservations() {
     
     if (snapshot.empty) {
       noObs.style.display = 'block';
-      noObs.textContent = 'No hay observaciones aún';
+      noObs.textContent = 'No hi ha observacions encara';
     } else {
       noObs.style.display = 'none';
       
@@ -911,10 +1407,9 @@ function loadObservations() {
         
         const isOwnerObs = obs.isOwner || (obs.userEmail && obs.userEmail.toLowerCase() === ownerEmail.toLowerCase());
         const obsClass = isOwnerObs ? 'owner-observation' : 'user-observation';
-        const userNameDisplay = obs.userName || obs.userEmail?.split('@')[0] || 'Usuario';
+        const userNameDisplay = obs.userName || obs.userEmail?.split('@')[0] || 'Usuari';
         
-        // Formatear fecha
-        let dateStr = 'Reciente';
+        let dateStr = 'Recent';
         if (obs.timestamp && obs.timestamp.toDate) {
           dateStr = obs.timestamp.toDate().toLocaleString('es-ES', {
             day: '2-digit',
@@ -927,13 +1422,15 @@ function loadObservations() {
         
         html += `
           <div class="${obsClass}" id="obs-${obsId}">
-            <div class="user-name">${userNameDisplay}</div>
-            ${isOwnerObs ? '<div class="owner-badge">Owner</div>' : ''}
+            <div class="user-name">
+              ${userNameDisplay}
+              ${isOwnerObs ? '<span class="owner-badge">Owner</span>' : ''}
+            </div>
             <div>${obs.text}</div>
             <div class="timestamp">${dateStr}</div>
             <div class="observation-actions">
-              <button onclick="replyToObservation('${obsId}', '${userNameDisplay}')">Responder</button>
-              ${isOwner() ? `<button class="delete-btn" onclick="deleteObservation('${obsId}')">Borrar</button>` : ''}
+              <button onclick="replyToObservation('${obsId}', '${userNameDisplay}')">Respondre</button>
+              ${isOwner() ? `<button class="delete-btn" onclick="deleteObservation('${obsId}')">Esborrar</button>` : ''}
             </div>
           </div>
         `;
@@ -942,9 +1439,9 @@ function loadObservations() {
       obsList.innerHTML = html;
     }
   }).catch((error) => {
-    console.error("Error cargando observaciones: ", error);
+    console.error("Error:", error);
     loading.style.display = 'none';
-    obsList.innerHTML = `<div class="text-red-500 text-center py-4">Error: ${error.message}</div>`;
+    obsList.innerHTML = `<div style="color:#ff3b30;text-align:center;padding:1rem;">Error: ${error.message}</div>`;
   });
 }
 
@@ -957,27 +1454,27 @@ function replyToObservation(obsId, userName) {
 
 function deleteObservation(obsId) {
   if (!isOwner()) {
-    alert('Solo el owner puede borrar observaciones');
+    alert('Només el propietari pot esborrar observacions');
     return;
   }
   
-  if (!confirm('¿Estás seguro de que quieres borrar esta observación?')) {
+  if (!confirm('¿Estàs segur que vols esborrar aquesta observació?')) {
     return;
   }
   
   db.collection('observations').doc(obsId).delete()
     .then(() => {
-      alert('Observación borrada correctamente');
-      loadObservations(); // Recargar observaciones
+      alert('Observació esborrada correctament');
+      loadObservations();
     })
     .catch((error) => {
-      alert('Error al borrar la observación: ' + error.message);
+      alert('Error: ' + error.message);
     });
 }
 
 function submitObservation() {
   if (!currentUser) {
-    if (confirm('Debes iniciar sesión para enviar observaciones. ¿Quieres registrarte ahora?')) {
+    if (confirm('Has d\'iniciar sessió per enviar observacions. ¿Vols registrar-te ara?')) {
       openLoginModal();
     }
     return;
@@ -985,17 +1482,15 @@ function submitObservation() {
   
   const text = document.getElementById('observationInput').value.trim();
   if (!text) {
-    alert('Por favor, escribe algo antes de enviar');
+    alert('Si us plau, escriu alguna cosa abans d\'enviar');
     return;
   }
   
-  showLoading('submitObsText', 'obsSpinner', null, 'Enviando...');
+  showLoading('submitObsText', 'obsSpinner', null, 'Enviant...');
   
-  // Obtener nombre del usuario
   db.collection('users').doc(currentUser.uid).get().then((userDoc) => {
     const userName = userDoc.exists ? userDoc.data().name : currentUser.email.split('@')[0];
     
-    // Guardar observación en Firestore
     db.collection('observations').add({
       photoId: currentPhoto.id,
       userId: currentUser.uid,
@@ -1009,23 +1504,20 @@ function submitObservation() {
       hideLoading('submitObsText', 'obsSpinner', 'submitObsText', 'Enviar');
       document.getElementById('observationInput').value = '';
       
-      // Mensaje de confirmación
       const sentMsg = document.createElement('div');
-      sentMsg.className = 'observation-sent';
-      sentMsg.textContent = '✓ Enviado';
+      sentMsg.textContent = '✓ Enviat';
       sentMsg.style.display = 'block';
-      sentMsg.style.color = '#00C853';
-      sentMsg.style.fontSize = '13px';
-      sentMsg.style.marginTop = '8px';
+      sentMsg.style.color = '#00f0ff';
+      sentMsg.style.fontSize = '0.9rem';
+      sentMsg.style.marginTop = '0.5rem';
       sentMsg.style.textAlign = 'right';
       
       const submitContainer = document.querySelector('.submit-observation');
-      const existingMsg = submitContainer.parentNode.querySelector('.observation-sent');
+      const existingMsg = submitContainer.parentNode.querySelector('div[style*="Enviat"]');
       if (existingMsg) existingMsg.remove();
       
       submitContainer.parentNode.insertBefore(sentMsg, submitContainer.nextSibling);
       
-      // Recargar observaciones
       loadObservations();
       
       setTimeout(() => {
@@ -1034,19 +1526,17 @@ function submitObservation() {
     })
     .catch((error) => {
       hideLoading('submitObsText', 'obsSpinner', 'submitObsText', 'Enviar');
-      alert('Error al enviar: ' + error.message);
+      alert('Error: ' + error.message);
     });
   }).catch((error) => {
     hideLoading('submitObsText', 'obsSpinner', 'submitObsText', 'Enviar');
-    console.error("Error obteniendo datos de usuario: ", error);
+    console.error("Error:", error);
   });
 }
 
 // ============================================
 // INICIALIZAR
 // ============================================
-// El auth state se escucha automáticamente arriba
-// Las fotos se generan automáticamente arriba
 </script>
 
 </body>
